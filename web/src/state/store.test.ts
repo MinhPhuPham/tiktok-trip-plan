@@ -18,6 +18,7 @@ describe("trip store", () => {
     const s = createTripStore(init({ phone: true })).getState();
     expect(s).toMatchObject({ lang: "en", tab: "plan", focusDay: 1, basemap: null, selected: null, editDay: null });
     expect(s.overlays).toEqual({ compass: false, nearby: true, routes: true });
+    expect(createTripStore(init({ phone: false })).getState().overlays.compass).toBe(false);
   });
 
   it("persists preferences and hidden places under versioned keys", () => {

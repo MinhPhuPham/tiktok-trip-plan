@@ -300,7 +300,7 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
       basemap: prefs?.basemap ?? null,
       activeBasemap: null,
       overlays: {
-        compass: prefs?.overlays.compass ?? !init.phone,
+        compass: prefs?.overlays.compass ?? false,
         nearby: prefs?.overlays.nearby ?? true,
         routes: prefs?.overlays.routes ?? true,
       },
