@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 
-/** jsdom has neither matchMedia nor ResizeObserver; tests run at desktop width. */
+/** jsdom has no matchMedia, ResizeObserver or IntersectionObserver; tests run at desktop width. */
 if (typeof window.matchMedia !== "function") {
   window.matchMedia = (query: string): MediaQueryList =>
     ({
@@ -22,6 +22,21 @@ if (typeof window.ResizeObserver !== "function") {
     observe(): void {}
     unobserve(): void {}
     disconnect(): void {}
+  };
+}
+
+if (typeof window.IntersectionObserver !== "function") {
+  window.IntersectionObserver = class {
+    readonly root = null;
+    readonly rootMargin = "0px";
+    readonly scrollMargin = "0px";
+    readonly thresholds = [0];
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
   };
 }
 

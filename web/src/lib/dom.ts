@@ -12,3 +12,11 @@ export function scrollParent(el: Element): HTMLElement | null {
   }
   return null;
 }
+
+/** When the scroll parent is scrolled past `anchor`, scrolls it back so `anchor` sits at its top edge. */
+export function scrollBackTo(anchor: Element | null): void {
+  const box = anchor && scrollParent(anchor);
+  if (!anchor || !box) return;
+  const start = box.scrollTop + anchor.getBoundingClientRect().top - box.getBoundingClientRect().top;
+  if (box.scrollTop > start) box.scrollTop = start;
+}

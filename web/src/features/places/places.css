@@ -1,4 +1,17 @@
-.filters { padding: 14px 20px 8px; display: grid; gap: 12px; border-bottom: 1px solid var(--line); }
+.places { --search-h: calc(var(--tap) + 20px); --stuck-edge: 0 1px 0 var(--line), var(--shadow-2); }
+.stuck-mark { height: 1px; margin-bottom: -1px; visibility: hidden; }
+.results-mark { position: relative; top: calc(-1 * var(--search-h)); }
+.places-search {
+  position: sticky; top: 0; z-index: 3; height: var(--search-h); padding: 14px 20px 6px;
+  background: var(--surface); transition: box-shadow var(--dur-1) ease-out;
+}
+.places[data-stuck] .places-search { box-shadow: var(--stuck-edge); }
+@media (min-height: 640px) {
+  .places .result-bar { position: sticky; top: var(--search-h); z-index: 2; background: var(--surface); transition: box-shadow var(--dur-1) ease-out; }
+  .places[data-stuck="bar"] .places-search { box-shadow: none; }
+  .places[data-stuck="bar"] .result-bar { box-shadow: var(--stuck-edge); }
+}
+.filters { padding: 6px 20px 8px; display: grid; gap: 12px; border-bottom: 1px solid var(--line); }
 .more-filters { display: grid; gap: 14px; padding-bottom: 6px; }
 .search { position: relative; }
 .search .icon { position: absolute; left: 12px; top: 50%; translate: 0 -50%; color: var(--text-3); width: 16px; height: 16px; pointer-events: none; }
@@ -31,7 +44,7 @@
   .compass button:hover:not(:disabled):not([aria-pressed="true"]) { border-color: var(--line-strong); color: var(--text); }
 }
 @media (max-width: 760px) {
-  .filters, .day-head, .plan-bar { padding-left: 16px; padding-right: 16px; }
+  .places-search, .filters, .day-head, .plan-bar { padding-left: 16px; padding-right: 16px; }
   .result-bar, .unplaced summary, .panel .panel-foot { padding-left: 16px; padding-right: 16px; }
 }
 .no-dir { margin-top: 8px; }

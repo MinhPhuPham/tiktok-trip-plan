@@ -12,6 +12,8 @@ import { Icon } from "../../ui/Icon";
 import { FilterPanel } from "./FilterPanel";
 import { hiddenCount } from "./options";
 import { PlaceList } from "./PlaceList";
+import { SearchBox } from "./SearchBox";
+import { useStickySearch } from "./useStickySearch";
 import "./places.css";
 
 const selectShowHidden = (s: TripState) => s.showHidden;
@@ -29,9 +31,15 @@ export function PlacesTab() {
   const t = useT();
   const places = useListedPlaces();
   const rowHover = useRowHover();
+  const { box, searchMark, resultsMark, revealResults } = useStickySearch();
   return (
-    <>
+    <div ref={box} className="places">
+      <div ref={searchMark} className="stuck-mark" aria-hidden="true" />
+      <div className="places-search">
+        <SearchBox onSearch={revealResults} />
+      </div>
       <FilterPanel />
+      <div ref={resultsMark} className="stuck-mark results-mark" aria-hidden="true" />
       <ResultBar t={t} shown={places.length} />
       {places.length ? (
         <div {...rowHover}>
@@ -40,7 +48,7 @@ export function PlacesTab() {
       ) : (
         <NoResults t={t} />
       )}
-    </>
+    </div>
   );
 }
 

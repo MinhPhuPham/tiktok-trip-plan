@@ -9,8 +9,11 @@ export const SEARCH_DELAY_MS = 140;
 
 const selectQuery = (s: TripState) => s.filters.q;
 
-/** The place search; typing updates the list after a short pause, a reset elsewhere clears it. */
-export function SearchBox() {
+/**
+ * The place search; typing updates the list after a short pause (onSearch runs just before), a
+ * reset elsewhere clears it.
+ */
+export function SearchBox({ onSearch }: { onSearch?: () => void }) {
   const t = useT();
   const query = useTripStore(selectQuery);
   const { setQuery } = useTripActions();
@@ -29,7 +32,10 @@ export function SearchBox() {
     const value = event.target.value;
     setText(value);
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setQuery(value.trim()), SEARCH_DELAY_MS);
+    timer.current = window.setTimeout(() => {
+      onSearch?.();
+      setQuery(value.trim());
+    }, SEARCH_DELAY_MS);
   };
 
   return (

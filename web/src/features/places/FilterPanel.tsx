@@ -10,7 +10,6 @@ import { Chip } from "../../ui/Chip";
 import { Icon } from "../../ui/Icon";
 import { Segmented, type SegmentedOption } from "../../ui/Segmented";
 import { CompassPicker } from "./CompassPicker";
-import { SearchBox } from "./SearchBox";
 import { priorityChip, priorityLevels, tagCounts } from "./options";
 
 const selectFiltersOpen = (s: TripState) => s.filtersOpen;
@@ -24,7 +23,6 @@ export function FilterPanel() {
   const active = advancedFilterCount(filters);
   return (
     <div className="filters">
-      <SearchBox />
       <DayFilter t={t} day={filters.day} />
       <button
         type="button"

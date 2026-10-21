@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { cssVars } from "../../../lib/css";
+import { scrollBackTo } from "../../../lib/dom";
 import { hoursText } from "../logic/issues";
 import type { Days, PickerState } from "../session/session";
 import { starsOf } from "../text";
@@ -135,6 +136,7 @@ export function AddPlaceDialog() {
   const dialog = useRef<HTMLDialogElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const results = useRef<HTMLUListElement>(null);
+  const countLine = useRef<HTMLParagraphElement>(null);
   const pendingFocus = useRef<{ ref: string; at: number } | null>(null);
   const speakCount = useRef(false);
   const [said, setSaid] = useState({ text: "", seq: 0 });
@@ -190,6 +192,8 @@ export function AddPlaceDialog() {
   };
   const filter = (patch: Partial<Omit<PickerState, "open">>) => {
     speakCount.current = true;
+    if (results.current) results.current.scrollTop = 0;
+    scrollBackTo(countLine.current);
     actions.setPicker(patch);
   };
   const onChip = (group: ChipGroup, value: string) => {
@@ -264,25 +268,27 @@ export function AddPlaceDialog() {
               onChange={(event) => filter({ query: event.target.value })}
             />
           </label>
-          <label className="pe-toggle">
-            <input
-              type="checkbox"
-              checked={picker.unplannedOnly}
-              onChange={(event) => filter({ unplannedOnly: event.target.checked })}
-            />
-            <span>{t("only_unplanned")}</span>
-          </label>
-          {picker.tab === "places" ? <PlaceFilters picker={picker} onPick={onChip} /> : null}
-          <p className="pe-count-line num" id="pe-count-line">
-            {count}
-          </p>
-          <ul className="pe-results" id="pe-results" ref={results} aria-labelledby="pe-picker-title">
-            {items.length ? (
-              items.map((item) => <PickRow key={item.node.ref} item={item} pickerDay={picker.day} onPick={onPick} />)
-            ) : (
-              <li className="pe-empty">{t("no_results")}</li>
-            )}
-          </ul>
+          <div className="pe-pick-body">
+            <label className="pe-toggle">
+              <input
+                type="checkbox"
+                checked={picker.unplannedOnly}
+                onChange={(event) => filter({ unplannedOnly: event.target.checked })}
+              />
+              <span>{t("only_unplanned")}</span>
+            </label>
+            {picker.tab === "places" ? <PlaceFilters picker={picker} onPick={onChip} /> : null}
+            <p ref={countLine} className="pe-count-line num" id="pe-count-line">
+              {count}
+            </p>
+            <ul className="pe-results" id="pe-results" ref={results} aria-labelledby="pe-picker-title">
+              {items.length ? (
+                items.map((item) => <PickRow key={item.node.ref} item={item} pickerDay={picker.day} onPick={onPick} />)
+              ) : (
+                <li className="pe-empty">{t("no_results")}</li>
+              )}
+            </ul>
+          </div>
           <LiveRegion text={said.text} seq={said.seq} />
         </div>
       ) : null}
