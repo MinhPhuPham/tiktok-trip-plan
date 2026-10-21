@@ -1,0 +1,135 @@
+#map, #gmap { position: absolute; inset: 0; }
+#map { z-index: 1; background: var(--map-bg); }
+#map:focus-visible { outline-offset: -3px; border-radius: 0; }
+.map-wrap.is-google #map { background: transparent; }
+#gmap { z-index: 0; pointer-events: none; }
+.map-tools { position: absolute; top: 12px; right: 12px; z-index: 1000; display: flex; gap: 8px; }
+.tool {
+  display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); min-width: var(--tap); padding: 0 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--surface); color: var(--text);
+  font-weight: 600; font-size: var(--fs-3); box-shadow: var(--shadow-2); justify-content: center;
+  transition: background-color var(--dur-1) ease-out, color var(--dur-1) ease-out;
+}
+.tool[aria-expanded="true"] { background: var(--surface-3); border-color: var(--line-strong); }
+.pop {
+  position: absolute; top: 64px; right: 12px; z-index: 1002; width: 320px; max-height: calc(100% - 140px); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-l); box-shadow: var(--shadow-3);
+  padding: 14px 16px 12px; transform-origin: top right;
+}
+.pop.is-entering { animation: pop-in var(--dur-2) var(--ease-out); }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+.pop h3 { margin: 14px 0 8px; font-size: var(--fs-4); font-weight: 650; color: var(--text-2); }
+.pop h3:first-child { margin-top: 0; }
+.pop-lang { display: none; }
+.check { display: flex; align-items: center; gap: 10px; min-height: var(--tap); cursor: pointer; font-size: var(--fs-3); }
+.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.check input:disabled + span { color: var(--text-3); }
+.check .muted { color: var(--text-3); margin-left: auto; }
+.legend-disc { margin-top: 6px; border-top: 1px solid var(--line); }
+.legend-disc summary {
+  list-style: none; display: flex; align-items: center; min-height: var(--tap); cursor: pointer; font-size: var(--fs-4); font-weight: 650; color: var(--text-2);
+}
+.legend-disc summary::-webkit-details-marker { display: none; }
+.legend-disc summary .chev { margin-left: auto; width: 16px; height: 16px; color: var(--text-3); transition: transform var(--dur-2) var(--ease-out); }
+.legend-disc[open] summary .chev { transform: rotate(180deg); }
+.legend { display: grid; gap: 4px; padding-bottom: 4px; font-size: var(--fs-4); color: var(--text-2); }
+.legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+.lg { display: flex; align-items: center; gap: 8px; min-height: 24px; }
+.lg b { font-weight: 650; color: var(--text); min-width: 22px; }
+.lg-pin { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--c); color: var(--ink); border: 1.5px solid var(--casing); box-shadow: var(--shadow-pin); flex: none; }
+.lg-pin svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.lg-line { width: 22px; height: 3px; border-radius: 2px; background: var(--d); flex: none; }
+.lg-size { display: inline-grid; place-items: center; width: 34px; flex: none; }
+.lg-size span { border-radius: 50%; background: var(--text-3); }
+.lg-size span.must { background: var(--accent); box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent); }
+.lg-center { width: 16px; height: 16px; border-radius: var(--radius-xs); background: var(--cc); flex: none; }
+.lg-near { width: 10px; height: 10px; border-radius: 50%; background: oklch(80% 0.005 255); border: 1.5px solid oklch(48% 0.01 255); flex: none; }
+.lg-cluster { width: 22px; height: 22px; border-radius: 50%; background: var(--ring); display: grid; place-items: center; flex: none; }
+.lg-cluster::after { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 1.5px var(--casing-soft); }
+.legend .gap { margin-top: 6px; }
+.map-error {
+  position: absolute; inset: 0; z-index: 900; display: grid; place-items: center; padding: 24px; background: var(--surface-2);
+}
+.map-error div { max-width: 36ch; display: grid; gap: 10px; color: var(--text-2); }
+.map-error svg { width: 56px; height: 56px; color: var(--text-3); }
+.leaflet-container { font: inherit; background: var(--map-bg); --map-dim: 0.25; }
+.leaflet-tile-pane { filter: var(--tile-filter); }
+.leaflet-nearby-pane > svg { pointer-events: none; }
+.is-google .leaflet-tile-pane { filter: none; }
+.leaflet-bar, .leaflet-control-zoom { border: 1px solid var(--line) !important; border-radius: var(--radius-m) !important; box-shadow: var(--shadow-2) !important; overflow: hidden; }
+.leaflet-bar a { width: var(--tap) !important; height: var(--tap) !important; line-height: var(--tap) !important; background: var(--surface) !important; color: var(--text) !important; border-color: var(--line) !important; }
+.leaflet-bar a:focus-visible { outline-offset: -2px; }
+.leaflet-control-attribution {
+  background: color-mix(in oklab, var(--surface) 85%, transparent) !important; color: var(--text-2); font-size: var(--fs-5);
+  max-width: min(420px, calc(100vw - 140px)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default;
+}
+.leaflet-control-attribution:hover, .leaflet-control-attribution:focus-within, .leaflet-control-attribution:focus {
+  white-space: normal; max-width: min(560px, calc(100vw - 24px));
+}
+.leaflet-control-attribution a { color: var(--text-2); }
+.leaflet-control-scale-line { background: color-mix(in oklab, var(--surface) 80%, transparent); border-color: var(--text-2); color: var(--text); font-size: var(--fs-5); }
+.is-google .leaflet-bottom { bottom: 26px; }
+.leaflet-tooltip { background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-s); box-shadow: var(--shadow-2); font-size: var(--fs-4); font-weight: 600; padding: 3px 8px; }
+.leaflet-tooltip-top::before { border-top-color: var(--surface); }
+.leaflet-tooltip-right::before { border-right-color: var(--surface); }
+.leaflet-tooltip.center-label { font-weight: 650; }
+.pin-wrap, .cluster-wrap { background: none; border: 0; }
+.pin {
+  position: relative; display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: var(--c); color: var(--ink);
+  border: 1.5px solid var(--casing); box-shadow: var(--shadow-pin);
+  transition: transform var(--dur-1) ease-out;
+}
+.pin svg { width: 58%; height: 58%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pin-low svg, .pin-none svg { stroke-width: 2.8; }
+.pin-high { box-shadow: var(--shadow-pin-raised); }
+.pin-must { box-shadow: 0 0 0 2.5px var(--accent), 0 0 0 4.5px var(--casing), var(--shadow-pin-raised); }
+.pin.is-hovered { transform: scale(1.18); box-shadow: 0 0 0 2px var(--casing), 0 0 0 4.5px var(--text), var(--shadow-pin-raised); }
+.pin.is-selected { transform: scale(1.18); box-shadow: 0 0 0 3px var(--accent), 0 0 0 6px color-mix(in oklab, var(--accent) 30%, transparent), var(--shadow-pin-raised); }
+.pin-day {
+  position: absolute; top: -7px; right: -9px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: var(--radius-pill);
+  background: var(--d); color: var(--dink); font: 700 var(--fs-5)/13px var(--font); text-align: center; border: 1.5px solid var(--casing);
+}
+.is-focus .pin-day, .hide-routes .pin-day { display: none; }
+.cluster {
+  position: relative; display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: var(--ring);
+  box-shadow: 0 0 0 2px var(--casing-soft), var(--shadow-pin-raised); transition: transform var(--dur-1) ease-out;
+}
+.cluster b {
+  display: grid; place-items: center; width: calc(100% - 10px); height: calc(100% - 10px); border-radius: 50%;
+  background: var(--surface); color: var(--text); font: 700 var(--fs-4)/1 var(--font); font-variant-numeric: tabular-nums; box-shadow: 0 0 0 2px var(--casing-soft);
+}
+.cluster.has-must::after {
+  content: ""; position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 2px var(--casing);
+}
+/* A hovered list row with no day open (emphasis.ts): its pin, dot or cluster stays lit, the rest dims. */
+.is-spotlight .leaflet-routes-pane, .is-spotlight .stop-chip, .is-spotlight .cluster-wrap:not(.is-hover) .cluster { opacity: var(--map-dim); }
+.cluster-wrap.is-hover { z-index: 9000 !important; }
+.cluster-wrap.is-hover .cluster { transform: scale(1.12); box-shadow: 0 0 0 2px var(--casing), 0 0 0 4.5px var(--text), var(--shadow-pin-raised); }
+.center-pin { display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--radius-m); background: var(--cc); color: var(--cink); border: 2px solid var(--casing); box-shadow: var(--shadow-pin-raised); }
+.center-pin svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ray-label, .ring-label { background: none; border: 0; }
+.ray-label span {
+  display: inline-block; translate: -50% -50%; padding: 1px 6px; border-radius: var(--radius-xs); background: var(--c); color: var(--ink);
+  font: 700 var(--fs-5)/16px var(--font); box-shadow: var(--shadow-pin);
+}
+.ring-label span {
+  display: inline-block; translate: -50% -50%; padding: 0 5px; border-radius: var(--radius-xs); background: color-mix(in oklab, var(--surface) 85%, transparent);
+  color: var(--text-2); font: 600 var(--fs-5)/16px var(--font); white-space: nowrap;
+}
+.stop-chip-wrap { background: none; border: 0; }
+.stop-chip { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--d); color: var(--dink); font: 700 var(--fs-5)/1 var(--font); border: 2px solid var(--casing); box-shadow: var(--shadow-pin); }
+@media (hover: hover) and (pointer: fine) {
+  .tool:hover { background: var(--surface-2); }
+  a.thumb:hover img { opacity: 0.88; }
+  .leaflet-bar a:hover { background: var(--surface-2) !important; }
+  .leaflet-marker-icon:hover .pin { transform: scale(1.12); }
+  .leaflet-marker-icon:hover .cluster { transform: scale(1.08); }
+}
+@media (max-width: 760px) {
+  .pop-lang { display: block; }
+  .pop { left: 12px; right: 12px; width: auto; top: 68px; max-height: calc(100% - 84px); }
+  .tool .label { display: none; }
+  .leaflet-control-zoom { display: none; }
+  .has-card .leaflet-control-scale, .has-card .leaflet-control-attribution { visibility: hidden; }
+}

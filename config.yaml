@@ -1,0 +1,113 @@
+city: "Đà Lạt"
+country_code: "VN"
+
+city_profile:                # words and climate of the city above; defaults describe HCMC
+  aliases: ["Đà Lạt", "Da Lat", "Dalat", "Lâm Đồng", "Lam Dong"]
+  best_months: "Nov–Apr"
+  best_months_note: "dry season"
+  viewpoints: ["Langbiang", "Đồi Robin"]
+  center_landmark: "Chợ Đà Lạt"        # default center when no hotel/override: the central market
+  center_landmark_en: "Da Lat Market"
+
+center:
+  hotel: "Meek Home, Đà Lạt"
+  override: ""
+
+spatial:
+  sectors: 8
+  rings_km: [2, 5, 10]
+  cluster_eps_km: 3.0
+  cluster_min_places: 1
+  center_sanity_km: 10
+
+travel:
+  mode: motorbike
+  time_buffer: 1.2
+
+trip:
+  days: 3
+  trip_start_date:      # e.g. 2026-12-20; leave empty to check hours as a Saturday
+  day_start: "08:00"
+  day_end: "22:00"
+  service_minutes:
+    food: 45
+    cafe: 45
+    attraction: 75
+    other: 30
+  max_zones_per_day: 2   # soft cap while building days; rises when there are many zones
+  day_grouping: sector   # sector: one direction per day, topped up from neighbours | nearest: biggest zone + nearest zones
+  max_places_per_day:    # hard cap on real places per day; empty = balanced at ceil(places / days)
+  max_nearby_per_day: 3  # optional nearby spots per day, added only when all the day's places fit
+
+plan:                        # how plan-to-go is built (route step)
+  mode: agent                # agent: Claude Code orders the stops (data/plan/prompt.md), the code computes times | solver: OR-Tools route
+  day_start: "04:00"         # agent plan window (trip.day_start/day_end stay for the solver)
+  day_end: "22:00"
+  target_places_per_day: 8   # places a day the plan prompt aims for (min with trip.max_places_per_day); extras go under unplaced
+  rest_at_center: true       # a `rest` stop back at the hotel/center after lunch on long days
+  # rhythm: slots of the day, in order (guidance, not hard windows). Defaults:
+  #   sunrise 04:30-07:00 (attraction), breakfast 07:00-08:30 (food), morning 08:30-11:30
+  #   (attraction/other), lunch 11:30-13:00 (food), rest 13:00-14:30 (no place), cafe 14:30-17:30
+  #   (cafe), dinner 17:30-19:30 (food), evening 19:30-22:00 (attraction/other).
+  # To change them, list every slot:
+  # rhythm:
+  #   - {id: sunrise, name_en: "Sunrise and cloud hunting", name_vi: "Ngắm bình minh, săn mây",
+  #      start: "04:30", end: "07:00", categories: [attraction], hint: "viewpoints, săn mây"}
+
+resolve:
+  max_city_distance_km: 40
+  min_name_score: 70
+  review_below_confidence: 0.7
+  # Category "other" candidates whose name or notes contain one of these whole words (case and
+  # diacritics ignored) are lodging/transport/rental services, not places to visit: resolve skips
+  # them before any Google call and lists them in data/excluded.json. [] turns this off.
+  exclude_keywords: ["homestay", "hotel", "khách sạn", "villa", "resort", "glamping", "nhà xe",
+                     "thuê xe", "thuê đồ", "rental", "motor", "head spa", "tiệm gội", "bus"]
+
+nearby:
+  provider: overpass
+  radius_km: 1.2
+  top_n: 3
+  service_minutes: 45    # minutes planned at a nearby spot
+
+fetch:
+  comments: playwright     # playwright (browser fallback when yt-dlp returns no comments) | none
+  max_comments: 200
+  headless: false          # TikTok shows headless Chrome a captcha (Oct 2026), so a window opens
+  browser_timeout_s: 90
+
+extract:
+  max_comments: 40
+
+media:
+  scene_threshold: 0.3
+  safety_frame_every_n: 90
+  max_frames: 15
+  whisper_model: large-v3
+  whisper_compute_type: int8   # CTranslate2 type: int8 halves memory on CPU and runs 2-3x faster than float32
+  language: vi
+
+export:
+  google_map: false          # true: map.html also offers a Google Maps basemap. Embeds GOOGLE_MAPS_BROWSER_KEY
+                             # (never GOOGLE_MAPS_KEY) in the file; restrict it to your site + "Maps JavaScript API"
+  max_frames_per_place: 4    # evidence frames copied to output/media per place (menu-looking first)
+  google_photos: false       # true: also download Google Maps photos (paid skus place_details_essentials,
+  max_photos_per_place: 1    # place_photos; capped under quota). Show the author attribution with them
+  # basemaps: [google, openfreemap, esri_streets, esri_satellite]   # default; add osm for OpenStreetMap tiles.
+  #   Without google_map, OpenFreeMap (vector tiles, no key) is the default view, then Esri Streets.
+
+roads:                       # day routes on the map follow the roads (export step, one OSRM call per leg, cached)
+  enabled: true              # false: no request, straight lines between stops
+  endpoint: "https://routing.openstreetmap.de"   # FOSSGIS public OSRM server: free fair use, 1 request/second
+  profiles:                  # path segment per travel.mode (routed-car, routed-bike, routed-foot there)
+    motorbike: routed-car
+    car: routed-car
+    walking: routed-foot
+
+quota:                       # local caps so a run never leaves the free tiers (see `tiktok-trip quota`)
+  safety_margin: 0.9         # stop at 90% of each free cap
+  monthly:                   # Google Places API (New), free calls per sku per calendar month (UTC)
+    text_search_pro: 5000
+    place_details_pro: 5000
+    place_details_enterprise: 1000
+    nearby_search_enterprise: 1000

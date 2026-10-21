@@ -1,0 +1,37 @@
+# input/places.yaml — your own list. section → category/meal hint. address optional.
+# Each entry: "name | address | remark" (address and remark optional). Every entry is a must-try
+# (priority high); `uv run tiktok-trip extract` collects it, then `run --from resolve`.
+# Sections: Ăn sáng (breakfast), Ăn trưa (lunch), Ăn tối (dinner), Ăn vặt (snack) → food;
+# Cà phê → cafe; Đi chơi / Tham quan → attraction. English names work too.
+- section: "Ăn sáng"      # breakfast
+  places:
+    - "Bún bò bốc khói | 29 Trần Phú"
+    - "Bánh cuốn nóng cô Hoa | 12 Nguyễn Lương Bằng, p2"
+    - "Bánh mì xíu mại 79 | Số 1 Thông Thiên Học, cư xá bưu điện"
+    - "Bún riêu dì cảnh | Hẻm 17 Bà Triệu, p4"
+    - "Bánh căn nhà chung | 1 đường nhà chung"
+- section: "Ăn trưa"      # lunch
+  places:
+    - "Nhà bên suối | 4/18 Trúc Lâm Yên Tử"
+    - "Hương Quán | 47B Đường Bình Trọng"
+    - "Lẩu bò - Gà nướng chú Xuỹnh | 38 Hàn Thuyên, p5"
+- section: "Ăn tối"       # dinner
+  places:
+    - "Ăn quán Túi nướng Lavender | 17/6 Nguyễn Trãi, phường 9"
+    - "Quán nướng Mậu Dịch | 28B Trần Hưng Đạo, p10 | đặt bàn trước"
+    - "Lẩu bò | 116 Hùng Vương"
+    - "Bánh xèo | thôn 5, tà nung"
+- section: "Cà phê"       # cafe
+  places:
+    - "Cà phê Tiệm Bánh Nhà Mây cây | hẻm 31 Phan Sào Nam,p11"
+    - "Làng Vũ Thị | 49B Tổ Sào Nam, p11"
+    - "Mongo Land | Tổ 16, Thôn 1, Xã Tà Nùng"
+    - "Gạch"
+    - "The Florest | thôn 4, đà lạt"
+    - "Cà hê Hoàng hôn chiều | Dốc số 9, Trại Mát"
+- section: "Ăn vặt"       # snack
+  places:
+    - "Sữa hạnh Việt Anh | Ngã 3 Việt Anh, Hải Thượng, Phường 01"
+    - "Bánh tráng nướng | 243 Đường Nguyễn Công Trứ"
+    - "Bánh bông lan KIWI | 21 Nguyễn Văn Trỗi"
+    - "Bánh su kem giòn Bà Nga | 77 Lê Văn Tám"

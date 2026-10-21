@@ -1,0 +1,96 @@
+#plan-editor { border-bottom: 1px solid var(--line); }
+.day { border-bottom: 1px solid var(--line); }
+.day-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 4px; padding: 4px 8px 4px 8px; background: var(--surface); }
+.day-h { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-2); }
+/* Two lines: "Day 1 · 13 stops" over the time span, the chevron centred on the right. */
+.day-toggle {
+  display: grid; grid-template-columns: 10px minmax(0, 1fr) 16px; grid-template-areas: "sw title chev" ". time chev";
+  align-items: center; column-gap: 8px; width: 100%; min-height: var(--tap); padding: 6px 12px 6px 21px;
+  border: 0; border-radius: var(--radius-m); background: none; color: var(--text); font: inherit; text-align: left;
+  transition: background-color var(--dur-1) ease-out;
+}
+.day-toggle .swatch { grid-area: sw; }
+.day-title { grid-area: title; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; font-weight: 650; letter-spacing: -0.01em; }
+.day-count { font-weight: 500; color: var(--text-2); letter-spacing: 0; }
+.swatch { width: 10px; height: 10px; border-radius: var(--radius-xs); background: var(--d); flex: none; }
+.day-span { grid-area: time; color: var(--text-2); font-size: var(--fs-4); font-weight: 400; line-height: 1.4; white-space: nowrap; }
+.day-toggle .chev { grid-area: chev; width: 16px; height: 16px; color: var(--text-3); transition: transform var(--dur-2) var(--ease-out); }
+.day.is-open .chev { transform: rotate(180deg); }
+.day-edit { flex: none; justify-content: center; width: var(--tap); padding: 0; }
+.day.is-open .day-head { box-shadow: 0 1px 0 var(--line); }
+/* visibility keeps a closed day out of the tab order and the a11y tree. */
+/* Grid rows animate the opening; closing is instant so the list can keep the clicked header in place. */
+.day-body { display: grid; grid-template-rows: 0fr; visibility: hidden; }
+.day.is-open .day-body { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows var(--dur-3) var(--ease-out); }
+.day-inner { min-height: 0; overflow: hidden; }
+/* One column: the swatch, the Directions icon (ghost padding pulled back) and the stop dots share a centre line. */
+.day-actions { display: flex; padding: 8px 20px 0 26px; }
+.day-actions > .btn.ghost { margin-left: -13px; }
+.day-actions:empty { display: none; }
+.legs { display: inline-flex; align-items: center; gap: 2px; }
+.legs-label { display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 0; color: var(--text-2); font-size: var(--fs-3); font-weight: 550; }
+.legs-label .icon { width: 16px; height: 16px; }
+.legs .btn { padding: 0 10px; }
+.stops { list-style: none; margin: 0; padding: 6px 12px 12px; position: relative; }
+.stop { position: relative; }
+.stop::before {
+  content: ""; position: absolute; left: 21px; top: 0; bottom: 0; width: 2px; background: color-mix(in oklab, var(--d) 55%, transparent);
+}
+.stop:first-child::before { top: 22px; }
+.stop:last-child::before { bottom: calc(100% - 22px); }
+.stop-btn {
+  position: relative; display: grid; grid-template-columns: 20px 1fr; gap: 12px; width: 100%; min-height: var(--tap); padding: 10px 8px 10px 12px;
+  border: 0; border-radius: var(--radius-m); background: none; text-align: left;
+  transition: background-color var(--dur-1) ease-out;
+}
+.dot {
+  position: relative; z-index: 1; width: 20px; height: 20px; margin-top: 1px; border-radius: 50%;
+  display: grid; place-items: center; font-size: var(--fs-5); font-weight: 700; background: var(--d); color: var(--dink, #fff);
+  box-shadow: 0 0 0 3px var(--surface);
+}
+.dot.hollow { background: var(--surface); border: 2px solid var(--d); }
+.stop-meta { display: flex; gap: 8px; color: var(--text-2); font-size: var(--fs-4); line-height: 1.5; min-width: 0; }
+.stop-meta .act { color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stop-name { display: block; font-size: var(--fs-2); font-weight: 600; line-height: 1.3; margin-top: 1px; overflow-wrap: anywhere; }
+.stop-btn[aria-current="true"], .row-btn[aria-current="true"] { background: var(--accent-tint); }
+.stop.muted .stop-name { font-weight: 500; color: var(--text-2); font-size: var(--fs-3); }
+.stop.is-hidden .stop-name { color: var(--text-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.stop-reason { display: -webkit-box; margin-top: 3px; color: var(--text-2); font-size: var(--fs-3); -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.unplaced { border-bottom: 1px solid var(--line); }
+.unplaced summary {
+  list-style: none; display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 20px; cursor: pointer;
+  font-weight: 600;
+}
+.unplaced summary::-webkit-details-marker { display: none; }
+.unplaced summary .chev { margin-left: auto; transition: transform var(--dur-2) var(--ease-out); color: var(--text-3); }
+.unplaced[open] summary .chev { transform: rotate(180deg); }
+.unplaced summary .count { color: var(--text-3); font-weight: 500; }
+@media (hover: hover) and (pointer: fine) {
+  .day-toggle:hover { background: var(--surface-2); }
+  .stop-btn:hover, .row-btn:hover { background: var(--surface-2); }
+  .stop-btn[aria-current="true"]:hover, .row-btn[aria-current="true"]:hover { background: var(--accent-tint); }
+}
+@media (max-width: 760px) {
+  .sheet-peek > .peek {
+    display: grid; grid-template-columns: 24px 1fr; gap: 12px; align-items: center; flex: none; width: 100%; min-height: 60px;
+    padding: 8px 16px 12px; border: 0; background: none; text-align: left;
+  }
+  .peek-dot {
+    display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--d); color: var(--dink, #fff); font-size: var(--fs-4); font-weight: 700;
+  }
+  .peek-text { display: grid; min-width: 0; }
+  .peek-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-2); line-height: 1.3; }
+  .peek-line b { font-weight: 650; color: var(--text-2); }
+  .peek-line .num { font-weight: 650; }
+  .peek-name { font-weight: 600; }
+  .peek-sub { color: var(--text-2); font-size: var(--fs-4); }
+  .stops, .panel-body .place-list { padding-left: 4px; padding-right: 4px; }
+  .day-head { padding: 4px; }
+  .day-toggle { padding-left: 17px; }
+  .day-actions { padding-left: 18px; }
+}
+@media (prefers-color-scheme: dark) {
+  .dot { box-shadow: 0 0 0 2px var(--casing), 0 0 0 4px var(--surface); }
+  .swatch { box-shadow: 0 0 0 2px var(--casing); }
+}

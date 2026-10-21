@@ -1,0 +1,24 @@
+{
+  "status_code": 0,
+  "cursor": 3,
+  "has_more": 0,
+  "total": 2,
+  "comments": [
+    {
+      "cid": "7401000000000000002",
+      "text": "534 Vĩnh Khánh, Quận 4 nha bạn",
+      "create_time": 1720000200,
+      "digg_count": 5,
+      "reply_id": "7401000000000000001",
+      "user": {"uid": "6800000000000000000", "unique_id": "reviewer", "nickname": "Reviewer Sài Gòn"}
+    },
+    {
+      "cid": "7401000000000000005",
+      "text": "Đi tối mới đông nha",
+      "create_time": 1720000500,
+      "digg_count": 2,
+      "reply_id": "0",
+      "user": {"uid": "555", "unique_id": "fan5", "nickname": "Fan Năm"}
+    }
+  ]
+}

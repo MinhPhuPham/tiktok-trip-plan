@@ -1,0 +1,150 @@
+{
+  "__DEFAULT_SCOPE__": {
+    "webapp.app-context": {
+      "language": "vi-VN",
+      "region": "VN"
+    },
+    "webapp.video-detail": {
+      "itemInfo": {
+        "itemStruct": {
+          "id": "7695813263333838087",
+          "desc": "#review #dalat #xuhuong #tiktok #viral ",
+          "createTime": "1791821163",
+          "author": {
+            "id": "7645206036538082322",
+            "uniqueId": "mt.v.i.lun",
+            "nickname": "Nga Ré Bản",
+            "secUid": "MS4wLjABAAAAJS3FqEwU7qQTOtCexhB3Ivw84Wmzu_jYxvTFgWDZXZXmFULOIAoTAz1VbkZbJrfl"
+          },
+          "music": {
+            "id": "7684299145734327058",
+            "title": "âm thanh gốc - Music For Life",
+            "authorName": "Music For Life",
+            "original": true,
+            "duration": 38,
+            "isCopyrighted": true
+          },
+          "imagePost": {
+            "images": [
+              {
+                "imageURL": {
+                  "urlList": [
+                    "https://p16-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/b231340be6f8475eabf00d4b45d871e4~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1",
+                    "https://p19-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/b231340be6f8475eabf00d4b45d871e4~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1"
+                  ]
+                },
+                "imageWidth": 1080,
+                "imageHeight": 1350
+              },
+              {
+                "imageURL": {
+                  "urlList": [
+                    "https://p16-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/d3c60b2430114d8f92295cbc1fc444c1~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1",
+                    "https://p19-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/d3c60b2430114d8f92295cbc1fc444c1~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1"
+                  ]
+                },
+                "imageWidth": 1414,
+                "imageHeight": 2000
+              },
+              {
+                "imageURL": {
+                  "urlList": [
+                    "https://p16-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/5227772950114f2b93694623d35b224a~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1",
+                    "https://p19-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/5227772950114f2b93694623d35b224a~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1"
+                  ]
+                },
+                "imageWidth": 1414,
+                "imageHeight": 2000
+              },
+              {
+                "imageURL": {
+                  "urlList": [
+                    "https://p16-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/3e0fce9933944478b2a1f95f9aa33d8c~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1",
+                    "https://p19-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/3e0fce9933944478b2a1f95f9aa33d8c~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1"
+                  ]
+                },
+                "imageWidth": 1414,
+                "imageHeight": 2000
+              },
+              {
+                "imageURL": {
+                  "urlList": [
+                    "https://p16-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/77dda5e7099b4755bc05894d2c69ff4d~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1",
+                    "https://p19-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/77dda5e7099b4755bc05894d2c69ff4d~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1"
+                  ]
+                },
+                "imageWidth": 1414,
+                "imageHeight": 2000
+              },
+              {
+                "imageURL": {
+                  "urlList": [
+                    "https://p16-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/a734f3195f6b4884a44aea0e7588112a~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1",
+                    "https://p19-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/a734f3195f6b4884a44aea0e7588112a~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1"
+                  ]
+                },
+                "imageWidth": 1414,
+                "imageHeight": 2000
+              }
+            ],
+            "cover": {
+              "imageURL": {
+                "urlList": [
+                  "https://p16-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/b231340be6f8475eabf00d4b45d871e4~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1",
+                  "https://p19-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/b231340be6f8475eabf00d4b45d871e4~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1"
+                ]
+              },
+              "imageWidth": 1080,
+              "imageHeight": 1350
+            },
+            "shareCover": {
+              "imageURL": {
+                "urlList": [
+                  "https://p16-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/b231340be6f8475eabf00d4b45d871e4~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1",
+                  "https://p19-common-sign.tiktokcdn.com/tos-alisg-i-photomode-sg/b231340be6f8475eabf00d4b45d871e4~tplv-photomode-image.jpeg?dr=14555&x-expires=1792566000&x-signature=FAKE&idc=my&ftpl=1"
+                ]
+              },
+              "imageWidth": 1080,
+              "imageHeight": 1350
+            },
+            "title": "Nửa tiktok em đi Đà Lạt cuối năm nay nhớ lưu lại nhen 🥰"
+          },
+          "poi": {
+            "id": "42203861098257585",
+            "name": "Đà Lạt",
+            "address": "110 Đ. Hùng Vương, Xuân Trường - Đà Lạt, Lâm Đồng, Vietnam",
+            "city": "Thành phố Đà Lạt",
+            "province": "",
+            "country": "",
+            "category": "Hoạt động ngoài trời và điểm tham quan",
+            "fatherPoiName": "Thành phố Đà Lạt"
+          },
+          "stats": {
+            "diggCount": 26,
+            "shareCount": 2,
+            "commentCount": 0,
+            "playCount": 443,
+            "collectCount": "8"
+          },
+          "statsV2": {
+            "diggCount": "26",
+            "shareCount": "2",
+            "commentCount": "0",
+            "playCount": "443",
+            "collectCount": "8",
+            "repostCount": "0"
+          },
+          "video": {
+            "id": "7695813263333838087",
+            "height": 0,
+            "width": 0,
+            "duration": 0,
+            "ratio": ""
+          }
+        }
+      },
+      "statusCode": 0,
+      "statusMsg": ""
+    }
+  }
+}

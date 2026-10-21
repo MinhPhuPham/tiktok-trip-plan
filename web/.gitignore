@@ -1,0 +1,5 @@
+# Installed locally with `npm ci`; never committed.
+node_modules/
+# Dev-only trip data written by `npm run dev:data`.
+.dev-data/
+*.tsbuildinfo

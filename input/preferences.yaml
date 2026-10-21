@@ -1,0 +1,12 @@
+# input/preferences.yaml — applied by `resolve` (then `run --from resolve` rebuilds everything).
+# Entries are place names (matched ignoring diacritics; "A (B)" tries A and B too) or place ids
+# such as gp:ChIJ... (see output/places.json).
+# must_go: priority "must" (★★★★), always planned.
+# removed: status "skip", left out of zones, nearby, the plan and every export.
+must_go:
+  - "Puppy Farm (Nông Trại Cún)"
+  - "Bao Tiền Một Mớ Bình Yên"
+  - "Tiệm nướng Mậu Dịch"
+  - "Ấm Sữa Gạo"
+  - "Bánh su kem giòn Bà Nga"
+removed: []
