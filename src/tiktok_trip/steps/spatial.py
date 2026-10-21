@@ -11,6 +11,7 @@ from tiktok_trip import geo, matching
 from tiktok_trip.config import AppConfig, SpatialConfig
 from tiktok_trip.context import Context
 from tiktok_trip.errors import UserFacingError
+from tiktok_trip.freshness import warn_if_not_enriched
 from tiktok_trip.models import Center, CenterSource, Place, Spatial, SpatialResult, Zone
 from tiktok_trip.storage import read_json, save_model, write_json
 
@@ -263,6 +264,7 @@ def run(ctx: Context) -> None:
         read_json(ctx.paths.places_file) if ctx.paths.places_file.exists() else []
     )
     places = [Place.model_validate(item) for item in raw]
+    warn_if_not_enriched(ctx.paths, places, "spatial")
     if not places:
         log.warning("No places in %s; computing the center only.", ctx.paths.places_file)
 

@@ -1,7 +1,7 @@
 import { makeDay, makeStop, makeTrip } from "../test/fixtures";
 import { planFromData } from "../data/types";
 import { prefsKey, tripKey, tripStorageId, watchTrip } from "./persist";
-import { createTripStore, selectMapFocusDay, selectSheetOpen, type TripStoreInit } from "./store";
+import { createTripStore, selectMapFocusDay, selectRouteDays, selectSheetOpen, type TripStoreInit } from "./store";
 
 const trip = makeTrip();
 const init = (patch: Partial<TripStoreInit> = {}): TripStoreInit => ({
@@ -34,7 +34,6 @@ describe("trip store", () => {
       lang: "vi",
       basemap: "osm",
       overlays: { nearby: false },
-      filtersOpen: false,
     });
     expect(JSON.parse(localStorage.getItem(tripKey(trip.city))!)).toEqual({ v: 2, hidden: ["a"] });
     const again = createTripStore(init()).getState();
@@ -46,13 +45,19 @@ describe("trip store", () => {
   it("reads the old app's keys once", () => {
     localStorage.setItem("tripmap:lang", "vi");
     localStorage.setItem("tripmap:ov-routes", "0");
-    localStorage.setItem("tripmap:filters-open", "1");
     localStorage.setItem(`tripmap:${trip.city}:hidden`, JSON.stringify(["b", 3]));
     const s = createTripStore(init()).getState();
     expect(s.lang).toBe("vi");
     expect(s.overlays.routes).toBe(false);
-    expect(s.filtersOpen).toBe(true);
     expect([...s.hidden]).toEqual(["b"]);
+  });
+
+  it("keeps v2 prefs saved with the dropped filters disclosure flag", () => {
+    localStorage.setItem(prefsKey, JSON.stringify({ v: 2, lang: "vi", basemap: "osm", overlays: {}, filtersOpen: true }));
+    const store = createTripStore(init());
+    expect(store.getState()).toMatchObject({ lang: "vi", basemap: "osm" });
+    store.getState().actions.setLang("en");
+    expect(JSON.parse(localStorage.getItem(prefsKey)!)).toEqual({ v: 2, lang: "en", basemap: "osm", overlays: {} });
   });
 
   it("works without storage", () => {
@@ -143,6 +148,28 @@ describe("trip store", () => {
     expect(selectMapFocusDay(store.getState())).toBeNull();
   });
 
+  it("draws the routes of the Plan tab's open day, or of the Places tab's day filter", () => {
+    const store = createTripStore(init({ persistence: null }));
+    const { actions } = store.getState();
+    const routes = () => selectRouteDays(store.getState());
+    expect(routes()).toBe(1);
+    actions.setFocusDay(null);
+    expect(routes()).toBe("all");
+    actions.setFocusDay(1);
+    actions.setTab("places");
+    expect(routes()).toBe("all");
+    actions.setDayFilter("2");
+    expect(routes()).toBe(2);
+    expect(selectMapFocusDay(store.getState())).toBeNull();
+    actions.setDayFilter("none");
+    expect(routes()).toBe("none");
+    actions.setTab("plan");
+    expect(routes()).toBe(1);
+    actions.resetFilters();
+    actions.setTab("places");
+    expect(routes()).toBe("all");
+  });
+
   it("records the hovered row and notifies only on a change", () => {
     const store = createTripStore(init({ persistence: null }));
     const seen: (string | null)[] = [];
@@ -154,18 +181,22 @@ describe("trip store", () => {
     expect(seen).toEqual(["a", null]);
   });
 
-  it("toggles filter sets immutably and resets them", () => {
+  it("toggles filter sets immutably, sets single choices and resets them", () => {
     const store = createTripStore(init({ persistence: null }));
     const { actions } = store.getState();
     const before = store.getState().filters;
-    actions.toggleFilter("sectors", "N");
-    actions.toggleFilter("tags", "local");
-    actions.toggleFilter("tags", "local");
-    expect(before.sectors.size).toBe(0);
-    expect([...store.getState().filters.sectors]).toEqual(["N"]);
-    expect(store.getState().filters.tags.size).toBe(0);
+    actions.toggleFilter("intents", "breakfast");
+    actions.toggleFilter("intents", "lunch");
+    actions.toggleFilter("intents", "lunch");
+    expect(before.intents.size).toBe(0);
+    expect([...store.getState().filters.intents]).toEqual(["breakfast"]);
+    actions.chooseFilter("priorities", "must");
+    actions.chooseFilter("priorities", "high");
+    expect([...store.getState().filters.priorities]).toEqual(["high"]);
+    actions.chooseFilter("priorities", null);
+    expect(store.getState().filters.priorities.size).toBe(0);
     actions.resetFilters();
-    expect(store.getState().filters.sectors.size).toBe(0);
+    expect(store.getState().filters.intents.size).toBe(0);
   });
 
   it("replaces the plan and drops a focus on a removed day", () => {

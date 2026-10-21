@@ -28,7 +28,7 @@ describe("App shell", () => {
   });
 
   it("keeps a saved language over the Vietnamese default", async () => {
-    savePrefs({ lang: "en", basemap: null, overlays: {}, filtersOpen: false });
+    savePrefs({ lang: "en", basemap: null, overlays: {} });
     await renderApp({ ok: true, data: makeTrip(), source: "inline" });
     expect(document.documentElement.lang).toBe("en");
     expect(screen.getByRole("tab", { name: /Plan/ })).toHaveAttribute("aria-selected", "true");
@@ -46,7 +46,7 @@ describe("App shell", () => {
   });
 
   it("shows load errors in the saved language", async () => {
-    savePrefs({ lang: "en", basemap: null, overlays: {}, filtersOpen: false });
+    savePrefs({ lang: "en", basemap: null, overlays: {} });
     await renderApp({ ok: false, error: { kind: "version", source: "trip.json", found: 9, expected: 1 } });
     expect(screen.getByRole("alert")).toHaveTextContent("newer version");
     expect(screen.getByRole("button", { name: "Reload" })).toBeInTheDocument();

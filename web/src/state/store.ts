@@ -1,25 +1,26 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 import type { Plan, PlanDay, PlanUnplaced } from "../data/types";
 import type { OpenDetent, SheetDetent } from "../lib/sheetSnap";
+import { isWatching, LOCATE_OFF, locateStep, type LocateEvent, type LocateState } from "../location/locateMachine";
+import type { UserFix } from "../location/position";
 import * as storedState from "./persist";
 import type { OverlayKey, Overlays, StoredPrefs, StoredTrip } from "./persist";
 
 export type { OverlayKey, Overlays } from "./persist";
 
 export type Tab = "plan" | "places";
-export type FilterSetKey = "sectors" | "priorities" | "categories" | "tags";
+export type FilterSetKey = "priorities" | "categories" | "intents";
 /** "all", "none" (not planned) or a day number as text. */
 export type DayFilter = string;
 
 export interface Filters {
   q: string;
   day: DayFilter;
-  /** Sector ids, UNASSIGNED included. */
-  sectors: ReadonlySet<string>;
   /** Priority levels; "none" for unrated places. */
   priorities: ReadonlySet<string>;
   categories: ReadonlySet<string>;
-  tags: ReadonlySet<string>;
+  /** "Good for" intent ids (data/intents.ts); a place fits when it fits any of them. */
+  intents: ReadonlySet<string>;
 }
 
 export interface ToastAction {
@@ -78,8 +79,9 @@ export interface TripActions {
   setDayFilter: (day: DayFilter) => void;
   toggleFilter: (key: FilterSetKey, value: string) => void;
   clearFilter: (key: FilterSetKey) => void;
+  /** A single choice (the priority and category menus); null clears the set. */
+  chooseFilter: (key: FilterSetKey, value: string | null) => void;
   resetFilters: () => void;
-  setFiltersOpen: (open: boolean) => void;
   setHidden: (id: string, hidden: boolean) => void;
   /** Returns true when the place is now hidden. */
   toggleHidden: (id: string) => boolean;
@@ -101,6 +103,10 @@ export interface TripActions {
   hideToast: (id?: number) => void;
   setStatus: (message: string | null) => void;
   setOnline: (online: boolean) => void;
+  /** Steps the "My location" state machine; leaving the watching modes forgets the position. */
+  locate: (event: LocateEvent) => void;
+  /** A position from the browser: the dot moves (and the first fix ends "locating"). */
+  receiveFix: (fix: UserFix) => void;
 }
 
 export interface TripState {
@@ -120,7 +126,6 @@ export interface TripState {
   overlays: Overlays;
   layersOpen: boolean;
   filters: Filters;
-  filtersOpen: boolean;
   hidden: ReadonlySet<string>;
   showHidden: boolean;
   /** Place, nearby spot or "center" whose card is open. */
@@ -136,6 +141,9 @@ export interface TripState {
   /** Transient map status ("Loading Google Maps…"), shown in the status pill. */
   status: string | null;
   online: boolean;
+  locate: LocateState;
+  /** The device's position while "My location" is on; memory only, never persisted. */
+  userFix: UserFix | null;
   actions: TripActions;
 }
 
@@ -145,6 +153,21 @@ export type TripStoreApi = StoreApi<TripState>;
 export const selectSheetOpen = (s: TripState): boolean => s.sheet !== "peek";
 
 export const selectMapFocusDay = (s: TripState): number | null => (s.tab === "plan" ? s.focusDay : null);
+
+/** The plan days whose routes the map draws: one day (with its stop chips), every day, or none. */
+export type RouteDays = number | "all" | "none";
+
+/**
+ * Plan tab: the open day, else every day. Places tab: its day filter ("Not planned" draws no route);
+ * there the pins already follow the filters, so nothing is dimmed the way the Plan focus dims.
+ */
+export function selectRouteDays(s: TripState): RouteDays {
+  if (s.tab === "plan") return s.focusDay ?? "all";
+  const { day } = s.filters;
+  if (day === "none") return "none";
+  const number = Number(day);
+  return day !== "all" && Number.isInteger(number) ? number : "all";
+}
 
 export interface Persistence {
   loadPrefs(): StoredPrefs;
@@ -176,10 +199,9 @@ const ACTION_TOAST_MS = 8000;
 const emptyFilters = (): Filters => ({
   q: "",
   day: "all",
-  sectors: new Set(),
   priorities: new Set(),
   categories: new Set(),
-  tags: new Set(),
+  intents: new Set(),
 });
 
 function toggled(set: ReadonlySet<string>, value: string): ReadonlySet<string> {
@@ -251,8 +273,8 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
       setDayFilter: (day) => setFilters(() => ({ day })),
       toggleFilter: (key, value) => setFilters((f) => ({ [key]: toggled(f[key], value) })),
       clearFilter: (key) => setFilters(() => ({ [key]: new Set<string>() })),
+      chooseFilter: (key, value) => setFilters(() => ({ [key]: new Set(value == null ? [] : [value]) })),
       resetFilters: () => set({ filters: emptyFilters() }),
-      setFiltersOpen: (open) => set({ filtersOpen: open }),
       setHidden,
       toggleHidden: (id) => {
         const hiding = !get().hidden.has(id);
@@ -300,6 +322,14 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
       hideToast: (id) => set((s) => (id == null || s.toast?.id === id ? { toast: null } : {})),
       setStatus: (message) => set({ status: message }),
       setOnline: (online) => set({ online }),
+      locate: (event) =>
+        set((s) => {
+          const locate = locateStep(s.locate, event);
+          if (locate === s.locate) return {};
+          return isWatching(locate.mode) ? { locate } : { locate, userFix: null };
+        }),
+      receiveFix: (fix) =>
+        set((s) => (isWatching(s.locate.mode) ? { userFix: fix, locate: locateStep(s.locate, { type: "fix" }) } : {})),
     };
 
     return {
@@ -318,7 +348,6 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
       },
       layersOpen: false,
       filters: emptyFilters(),
-      filtersOpen: prefs?.filtersOpen ?? false,
       hidden: knownIds(trip?.hidden ?? []),
       showHidden: false,
       selected: null,
@@ -330,6 +359,8 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
       toast: null,
       status: null,
       online: init.online ?? true,
+      locate: LOCATE_OFF,
+      userFix: null,
       actions,
     };
   });
@@ -339,15 +370,9 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
       const prefsChanged =
         state.lang !== previous.lang ||
         state.basemap !== previous.basemap ||
-        state.overlays !== previous.overlays ||
-        state.filtersOpen !== previous.filtersOpen;
+        state.overlays !== previous.overlays;
       if (prefsChanged) {
-        persistence.savePrefs({
-          lang: state.lang,
-          basemap: state.basemap,
-          overlays: overlayChoices,
-          filtersOpen: state.filtersOpen,
-        });
+        persistence.savePrefs({ lang: state.lang, basemap: state.basemap, overlays: overlayChoices });
       }
       if (state.hidden !== previous.hidden) persistence.saveTrip(storageId, { hidden: [...state.hidden] });
     });

@@ -60,6 +60,10 @@ class Paths:
         return self.data / "places.json"
 
     @property
+    def enriched_file(self) -> Path:
+        return self.data / "enriched.json"
+
+    @property
     def review_file(self) -> Path:
         return self.data / "review.json"
 

@@ -41,7 +41,7 @@ The trip map is a React + TypeScript app in `web/`; it replaced the earlier hand
   export. Bump both constants together when a change would break an app that is already installed:
   a removed or renamed field, a changed type or meaning. Adding a field the app may ignore needs no bump.
 - Map pins and clusters are coloured by place category (`category_colors`, `category_ink`, from
-  `palette.CATEGORY_COLORS`); compass rays, labels and the direction filter keep the sector colours.
+  `palette.CATEGORY_COLORS`); compass rays and labels keep the sector colours.
   Exports older than those fields use the copy in `web/src/data/palette.ts` (a test keeps it equal
   to the schema defaults).
 - A render error inside the app shows the load-error screen (Reload) instead of a blank page.
@@ -117,6 +117,45 @@ system font with Vietnamese diacritics or Pillow's default) + `robots.txt` + `me
   Safari 17+ on macOS → File → Add to Dock; desktop Firefox and older Safari → use Chrome or Edge.
   "Not now" shrinks the button to its icon for 14 days; the panel footer keeps the same steps.
 
+## Location ("My location")
+
+- Button: icon-only, 44 px, accessible name "Vị trí của tôi" / "My location", a Leaflet control at the
+  bottom right: above the zoom buttons on desktop, above the attribution and the sheet peek on phones
+  (thumb reach, like Google Maps). It sits under an open phone sheet and is hidden while the phone card is
+  open; on phones the toast leaves room for it. Where location cannot work (http page, no API) it still
+  shows, struck through, and a tap explains why (open the https link / use Safari or Chrome).
+- States (`location/locateMachine.ts`): off (crosshair) → tap → locating (spinner) → first fix →
+  following (filled, blue tint: the map centres the dot, zoom 15 or closer, in the area clear of the card or
+  the open sheet, and pans to later fixes at most once a second when the dot drifts more than 16 px). Any
+  camera move the follow camera did not start (drag, pinch, wheel, keys, a fly to a place) → showing (filled,
+  the dot stays, the map stays). Tap on showing → following again; tap on following → off (position
+  forgotten). No compass mode.
+- Permission: nothing calls geolocation on load except when the Permissions API already says `granted`:
+  then the dot shows silently (showing, the map does not move). `denied` (on load, a refused prompt, or a
+  revoke) → struck-through button; a tap opens a popover with the steps to allow location for this site
+  (iOS Settings → Safari → Location, or the site settings beside the address; map.html from file:// says to
+  open the https link; in Zalo / Facebook / other in-app browsers: open the page in a real browser) and a
+  Try again; the browser is never prompted again by itself. A prompt refused right after a tap opens that
+  popover at once. A permission reset to "ask" turns the button back to off. The Permissions API is only a
+  hint: missing, throwing or rejecting, a tap still asks.
+- The tap asks first and synchronously: the click sets the store, whose change starts watchPosition in the
+  same task (user gesture kept); the iOS compass permission is requested after it, in the same tap, and
+  location never waits for or depends on it. Until the first fix a low-accuracy getCurrentPosition
+  (network/Wi-Fi, maximumAge 60 s) runs beside the precise watch (30 s first-fix timeout; iOS indoors can
+  take 10 to 20 s), so the dot shows early and sharpens; a coarse fix never replaces a precise one. Both
+  giving up → "failed" (struck-through, tap retries) and a toast with Try again (in-app browsers: "open in
+  Safari or Chrome"); after a fix, errors keep the dot.
+- watchPosition runs only while locating / showing / following and the page is visible (stopped on
+  `visibilitychange` hidden, resumed on return, cleared on unmount).
+- Dot: blue with a white ring and a pulsing halo (static with reduced motion), an accuracy circle (hidden
+  above 2 km or when it would cover the whole view), a heading cone from the GPS course while moving, else
+  the compass (`deviceorientationabsolute`, or iOS `webkitCompassHeading` after
+  `DeviceOrientationEvent.requestPermission()`, asked only from the locate tap). Its pane is click-through,
+  so pins under it stay tappable.
+- Privacy: the position lives in memory only (store `userFix`, never persisted, logged or sent; cleared when
+  location turns off). Only the browser's permission state is read. Exports never mention it.
+- The place card meta adds "1.2 km từ bạn" (straight line) while the dot shows.
+
 ## App structure (`web/src/`)
 
 ```
@@ -146,6 +185,12 @@ map/                         imperative Leaflet wrapped in hooks: MapView, basem
                              map/stopChip.ts: the open day's stop numbers live in their own
                              click-through pane (620: above markers 600, under tooltips 650), so no
                              pin or cluster covers them, each at its own marker's top-right
+                             map/userLayer.ts: the user's blue dot in its own click-through pane (640:
+                             above pins and stop chips, under tooltips, never dimmed) and the follow camera;
+                             map/LocateControl.tsx: the "My location" button as a Leaflet control
+location/                    "My location" (see Location below): locateMachine.ts (pure state machine),
+                             locator.ts (watchPosition / Permissions API driver), heading.ts (compass),
+                             position.ts (UserFix, straight-line distance), useDistanceFromUser (card meta)
 routing/                     live road geometry for edited plans: legs come from data.roads, then
                              an IndexedDB cache (`trip-roads-v1`, keyed by OSRM base URL + both
                              ends at 5 decimals, LRU-pruned at 2,000 legs), then one OSRM request
@@ -161,7 +206,11 @@ features/plan/               Plan tab (days, stops, directions links); the phone
                              #1 of the open Plan day ("Day 1 · #1"), and steps ‹ › (or swipes)
                              through that day's visits, flying the map to each and lighting its pin;
                              back to its start after 2 idle min. A dated trip opens on today's day
-features/places/             Places tab (search, filters, list, hide, export preferences)
+features/places/             Places tab (search, filters, list, hide, export preferences). Filters are one
+                             grid of dropdowns: day (with place counts), "Good for" (multi-select of the
+                             traveller intents in data/intents.ts, matching any; popover, a bottom panel on
+                             phones), priority, category. They also hide pins on the map while the tab shows,
+                             and a chosen day draws only that day's route and stop chips (selectRouteDays)
 features/card/               place card (media, hours, best time, links)
 features/editor/             plan editor: logic/ (pure TS: clock, checks, plan.json; Vitest cases
                              mirror tests/test_plan_agent.py) and UI; lazy loaded (React.lazy).

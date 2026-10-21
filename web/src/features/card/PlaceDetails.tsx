@@ -37,6 +37,8 @@ interface PlaceDetailsProps {
   /** The plan checks for this place (data/planIssues). */
   notes: readonly PlanNote[];
   hidden: boolean;
+  /** Straight-line distance from the user ("1.2 km") while their location shows, else "". */
+  fromUser: string;
   now: Date;
   photosExpanded: boolean;
   onExpandPhotos: () => void;
@@ -50,6 +52,7 @@ export function PlaceDetails({
   place,
   notes,
   hidden,
+  fromUser,
   now,
   photosExpanded,
   onExpandPhotos,
@@ -57,7 +60,14 @@ export function PlaceDetails({
 }: PlaceDetailsProps) {
   const hintId = useId();
   const slot = plan.placeSlots.get(place.id);
-  const meta = [t.category(place.category), t.directionName(place.sector), km(place.distance_km)].filter(Boolean).join(" · ");
+  const meta = [
+    t.category(place.category),
+    t.directionName(place.sector),
+    km(place.distance_km),
+    fromUser && t.t("from_you", { d: fromUser }),
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const dishes = mustTry(place.must_try);
   return (
     <>

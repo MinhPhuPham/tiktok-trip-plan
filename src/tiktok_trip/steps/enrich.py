@@ -27,6 +27,7 @@ from tiktok_trip.extraction.raw import (
     read_caption,
     video_id_from_url,
 )
+from tiktok_trip.freshness import mark_enriched
 from tiktok_trip.matching import clean, core_name, fold, name_score, strip_regions
 from tiktok_trip.models import BestTime, Candidate, Place, PriceRange
 from tiktok_trip.paths import Paths
@@ -366,6 +367,7 @@ def run(ctx: Context) -> None:
     finally:
         details.close()
     save_models(ctx.paths.places_file, enriched)
+    mark_enriched(ctx.paths, enriched)
     log.info(
         "Enrich: %d places, %d with new Place Details, %d new or updated best-time suggestions, "
         "%d with new tags",

@@ -89,6 +89,7 @@ GOOGLE_TYPE_CATEGORY = {
 }
 
 ENRICHED_FIELDS = ("hours", "price_range", "rating", "rating_count", "spatial", "status")
+"""Carried over when set; tags are listed apart because an empty list means "not enriched"."""
 
 
 @dataclass(frozen=True)
@@ -489,6 +490,8 @@ def carry_enrichment(previous: Place | None, fresh: Place) -> Place:
         for name in ENRICHED_FIELDS
         if getattr(previous, name) is not None
     }
+    if previous.tags:
+        update["tags"] = previous.tags
     if previous.preference == "removed":
         update.pop("status", None)
     if previous.best_time is not None and previous.videos == fresh.videos:

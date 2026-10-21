@@ -6,6 +6,7 @@ import { useTripModel, useTripPlan } from "../../data/hooks";
 import type { Target } from "../../data/model";
 import { useTargetNotes, type PlanNote } from "../../data/planIssues";
 import { useT } from "../../i18n/useT";
+import { useDistanceFromUser } from "../../location/useDistanceFromUser";
 import { useIsHidden, useSelectedId, useTripActions, useTripStoreApi } from "../../state/hooks";
 import type { TripStoreApi } from "../../state/store";
 import { Icon } from "../../ui/Icon";
@@ -72,6 +73,7 @@ function PlaceBody({ target, notes }: { target: Extract<Target, { type: "place" 
   const t = useT();
   const now = useNow();
   const hidden = useIsHidden(target.id);
+  const fromUser = useDistanceFromUser(target.item);
   const toggleHidden = useToggleHidden();
   const [photosOpen, setPhotosOpen] = useState<ReadonlySet<string>>(() => new Set());
   return (
@@ -82,6 +84,7 @@ function PlaceBody({ target, notes }: { target: Extract<Target, { type: "place" 
       place={target.item}
       notes={notes}
       hidden={hidden}
+      fromUser={fromUser}
       now={now}
       photosExpanded={photosOpen.has(target.id)}
       onExpandPhotos={() => setPhotosOpen((prev) => new Set(prev).add(target.id))}

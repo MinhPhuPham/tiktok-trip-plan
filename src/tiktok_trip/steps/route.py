@@ -17,6 +17,7 @@ from pathlib import Path
 from tiktok_trip.config import TripConfig
 from tiktok_trip.context import Context
 from tiktok_trip.errors import GateError
+from tiktok_trip.freshness import warn_if_not_enriched
 from tiktok_trip.models import Itinerary, NearbySpot, Place, SpatialResult
 from tiktok_trip.planning.collect import collect_plan, render_validation
 from tiktok_trip.planning.inputs import build_inputs
@@ -247,6 +248,7 @@ def run(ctx: Context, *, collect: bool = False) -> None:
         raise RuntimeError(f"{ctx.paths.spatial_file} is missing. Run the spatial step first.")
     spatial = load_model(ctx.paths.spatial_file, SpatialResult)
     places = load_models(ctx.paths.places_file, Place)
+    warn_if_not_enriched(ctx.paths, places, "route")
     if not ctx.paths.nearby_file.exists():
         log.warning("%s is missing; routing without nearby spots.", ctx.paths.nearby_file)
     spots = load_models(ctx.paths.nearby_file, NearbySpot)

@@ -19,14 +19,15 @@ let deferred: BeforeInstallPromptEvent | null = null;
 let installed = false;
 let state: InstallState = { kind: "unavailable" };
 
-const standalone = (): boolean =>
+/** Running as the installed app (an iOS home-screen app's user agent lacks "Safari/", like an in-app browser). */
+export const isStandalone = (): boolean =>
   window.matchMedia("(display-mode: standalone)").matches ||
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 function compute(): InstallState {
   const touchMac = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
   const { help, ios } = browserInfo(navigator.userAgent, touchMac);
-  const kind = installKind({ pwa: __PWA__, installed, standalone: standalone(), canPrompt: deferred != null, help });
+  const kind = installKind({ pwa: __PWA__, installed, standalone: isStandalone(), canPrompt: deferred != null, help });
   const event = deferred;
   if (kind === "unavailable") return { kind };
   if (kind !== "prompt" || !event) return { kind: help, ios };

@@ -11,10 +11,13 @@ import { PlaceRow } from "./PlaceRow";
 interface PlaceListProps {
   t: Translator;
   places: readonly MapPlace[];
+  /** Must-go places under their own heading; off while the order is by intent relevance. */
+  grouped?: boolean;
 }
 
-/** Must-go places first under their own heading, then the rest. */
-export function PlaceList({ t, places }: PlaceListProps) {
+/** Must-go places first under their own heading, then the rest; or one list in the given order. */
+export function PlaceList({ t, places, grouped = true }: PlaceListProps) {
+  if (!grouped) return <PlaceGroup t={t} places={places} />;
   const must = places.filter((p) => p.priority === "must");
   const rest = must.length ? places.filter((p) => p.priority !== "must") : places;
   if (!must.length) return <PlaceGroup t={t} places={rest} />;

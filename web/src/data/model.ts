@@ -30,8 +30,6 @@ export interface TripModel {
   nearbyById: ReadonlyMap<string, MapNearby>;
   /** Folded name, address, dishes and tag names in every language, for search. */
   searchText: ReadonlyMap<string, string>;
-  sectorIds: readonly string[];
-  presentSectors: ReadonlySet<string>;
   /** Categories some place has, in CATEGORY_ORDER. */
   presentCategories: readonly CategoryId[];
   rhythm: ReadonlyMap<string, MapRhythmSlot>;
@@ -115,8 +113,6 @@ export function buildTripModel(data: TripData): TripModel {
     placeById,
     nearbyById,
     searchText,
-    sectorIds: data.sectors,
-    presentSectors: new Set(places.map((p) => p.sector)),
     presentCategories: CATEGORY_ORDER.filter((category) => places.some((p) => p.category === category)),
     rhythm: new Map(data.config.rhythm.map((slot) => [slot.id, slot])),
     media: data.media,

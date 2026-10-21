@@ -17,6 +17,8 @@ export const FALLBACK_VIEW: [number, number] = [10.78, 106.7];
 export const DIMMED_OPACITY = 0.25;
 /** The open day's stop numbers: above every marker (Leaflet's marker pane is 600), under tooltips (650). */
 export const STOP_CHIP_PANE = "stopChips";
+/** The user's blue dot: above pins and stop chips like Google Maps, under tooltips; never takes a tap. */
+export const USER_PANE = "userLocation";
 
 export interface MapRenderers {
   compass: Renderer;

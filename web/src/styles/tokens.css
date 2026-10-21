@@ -22,6 +22,7 @@
   --casing-soft: #ffffff;
   --scrim: oklch(21% 0.012 255 / 0.18);
   --map-bg: oklch(94.5% 0.004 255);
+  --user-loc: oklch(57% 0.2 258);
   --tile-filter: none;
   --shadow-1: 0 1px 2px oklch(21% 0.02 255 / 0.06), 0 1px 1px oklch(21% 0.02 255 / 0.04);
   --shadow-2: 0 1px 2px oklch(21% 0.02 255 / 0.06), 0 6px 16px -4px oklch(21% 0.02 255 / 0.14);
@@ -75,6 +76,7 @@
     --casing-soft: oklch(78% 0.006 255);
     --scrim: oklch(0% 0 0 / 0.4);
     --map-bg: oklch(24% 0.01 255);
+    --user-loc: oklch(66% 0.17 255);
     --tile-filter: brightness(0.6) contrast(1.1) saturate(0.8);
     --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.4);
     --shadow-2: 0 1px 2px oklch(0% 0 0 / 0.35), 0 8px 20px -6px oklch(0% 0 0 / 0.6);

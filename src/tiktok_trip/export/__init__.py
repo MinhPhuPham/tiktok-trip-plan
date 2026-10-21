@@ -16,6 +16,7 @@ from tiktok_trip.export.media import build_media
 from tiktok_trip.export.mymaps import write_mymaps
 from tiktok_trip.export.roads import fetch_roads
 from tiktok_trip.export.secrets_guard import assert_no_server_key
+from tiktok_trip.freshness import warn_if_not_enriched
 from tiktok_trip.models import (
     Itinerary,
     NearbySpot,
@@ -82,6 +83,7 @@ def run(ctx: Context) -> None:
     if not data.places:
         logger.warning("No places in %s; run the resolve step first.", ctx.paths.places_file)
         return
+    warn_if_not_enriched(ctx.paths, data.places, "export")
     if data.spatial is None:
         logger.warning("spatial.json missing: exporting without center, rays or sectors.")
     paths = ctx.paths

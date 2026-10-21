@@ -6,7 +6,7 @@ import { useTripStoreApi } from "../state/hooks";
 import type { TripStoreApi } from "../state/store";
 import { createFingerReach } from "./fingerReach";
 import L from "./leaflet";
-import { FALLBACK_VIEW, MAX_ZOOM, MIN_ZOOM, STOP_CHIP_PANE, type MapHandle } from "./mapCore";
+import { FALLBACK_VIEW, MAX_ZOOM, MIN_ZOOM, STOP_CHIP_PANE, USER_PANE, type MapHandle } from "./mapCore";
 
 /** Click-through panes let taps reach the pin under a label or a stop chip. */
 const PANES: readonly [name: string, zIndex: number, clickThrough: boolean][] = [
@@ -15,6 +15,7 @@ const PANES: readonly [name: string, zIndex: number, clickThrough: boolean][] = 
   ["routes", 420, false],
   ["nearby", 590, false],
   [STOP_CHIP_PANE, 620, true],
+  [USER_PANE, 640, true],
 ];
 
 /** Every place not hidden, plus the center (the fit button and the first view). */

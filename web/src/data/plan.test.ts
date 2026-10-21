@@ -1,5 +1,6 @@
 import { makeDay, makePlace, makeStop, makeTrip } from "../test/fixtures";
-import { advancedFilterCount, filtersActive, listedPlaces, visiblePlaceIds } from "./filters";
+import type { Filters } from "../state/store";
+import { filtersActive, listedPlaces, visiblePlaceIds } from "./filters";
 import { buildTripModel } from "./model";
 import { directionsFor, normalizePlan } from "./plan";
 import { peekStart, stopName, stopTime, todayTripDay } from "./stops";
@@ -7,7 +8,7 @@ import { createTranslator } from "../i18n/translator";
 import { planFromData } from "./types";
 
 const model = buildTripModel(makeTrip());
-const filters = { q: "", day: "all", sectors: new Set<string>(), priorities: new Set<string>(), categories: new Set<string>(), tags: new Set<string>() };
+const filters: Filters = { q: "", day: "all", priorities: new Set(), categories: new Set(), intents: new Set() };
 
 describe("trip model", () => {
   it("orders places by priority, then distance", () => {
@@ -24,7 +25,7 @@ describe("normalizePlan", () => {
   it("numbers visits and records each place's day", () => {
     const plan = normalizePlan(model, planFromData(model.data));
     expect(plan.days[0]?.stops.map((s) => s.number)).toEqual([null, 1, 2, null]);
-    expect(plan.placeSlots.get("a")).toEqual({ day: 1, stop: 1 });
+    expect(plan.placeSlots.get("a")).toEqual({ day: 1, stop: 1, slot: null });
     expect(plan.visitCount).toBe(2);
     expect(plan.days[0]?.areas).toBe("N");
   });
@@ -78,8 +79,9 @@ describe("filters", () => {
     expect(list({ day: "1" })).toEqual(["a"]);
     expect(list({ day: "none" })).toEqual(["b", "c"]);
     expect(list({ priorities: new Set(["none"]) })).toEqual(["c"]);
-    expect(advancedFilterCount({ ...filters, tags: new Set(["local"]) })).toBe(1);
+    expect(list({ categories: new Set(["cafe"]) })).toEqual(["b"]);
     expect(filtersActive(filters)).toBe(false);
+    expect(filtersActive({ ...filters, intents: new Set(["breakfast"]) })).toBe(true);
   });
 
   it("keeps hidden places off the map unless shown", () => {

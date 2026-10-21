@@ -17,6 +17,7 @@ import { useStickySearch } from "./useStickySearch";
 import "./places.css";
 
 const selectShowHidden = (s: TripState) => s.showHidden;
+const selectRanked = (s: TripState) => s.filters.intents.size > 0;
 
 /** Reset clears every filter; its button disappears, so focus moves to the search box. */
 function useResetFilters(): () => void {
@@ -30,6 +31,7 @@ function useResetFilters(): () => void {
 export function PlacesTab() {
   const t = useT();
   const places = useListedPlaces();
+  const ranked = useTripStore(selectRanked);
   const rowHover = useRowHover();
   const { box, searchMark, resultsMark, revealResults } = useStickySearch();
   return (
@@ -43,7 +45,7 @@ export function PlacesTab() {
       <ResultBar t={t} shown={places.length} />
       {places.length ? (
         <div {...rowHover}>
-          <PlaceList t={t} places={places} />
+          <PlaceList t={t} places={places} grouped={!ranked} />
         </div>
       ) : (
         <NoResults t={t} />
@@ -90,7 +92,7 @@ function NoResults({ t }: { t: Translator }) {
     <div className="empty">
       <Icon name="compass" />
       <p>{t.t("no_results")}</p>
-      <Button onClick={resetFilters}>{t.t("reset")}</Button>
+      <Button onClick={resetFilters}>{t.t("clear_filters")}</Button>
     </div>
   );
 }

@@ -36,7 +36,6 @@ const CATEGORIES: ReadonlySet<string> = new Set(CATEGORY_ORDER);
 /** The category, or "other" for one this app does not know. */
 export const categoryId = (category: string): CategoryId =>
   CATEGORIES.has(category) ? (category as CategoryId) : "other";
-export const COMPASS_GRID = ["NW", "N", "NE", "W", null, "E", "SW", "S", "SE"] as const;
 
 /**
  * A stop as the plan holds it: the exported MapStop, or the plan editor's output (times as
@@ -86,6 +85,8 @@ export interface TripDay {
 export interface PlaceSlot {
   day: number;
   stop: number | null;
+  /** The plan's rhythm slot of the visit ("breakfast", "sunrise", …). */
+  slot: string | null;
 }
 
 /** The plan ready to draw: numbered days, the day each place is in, and the left-out places. */

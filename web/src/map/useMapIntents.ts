@@ -1,15 +1,14 @@
 import { useEffect } from "react";
-import { DOM_IDS } from "../app/ids";
 import { prefersReducedMotion } from "../app/viewport";
 import { getTripPlan, useTripModel } from "../data/hooks";
-import { sheetOffsets, type SheetDetent } from "../lib/sheetSnap";
 import { useTripStoreApi } from "../state/hooks";
 import type { MapIntent } from "../state/store";
 import { ROW_HOVER_DELAY_MS } from "../state/useRowHover";
 import L from "./leaflet";
 import { drawnHover, FLY_ZOOM, watch, type MapHandle } from "./mapCore";
-import { centringPan, overlayShift, type MapOverlays } from "./overlayShift";
+import { centringPan, overlayShift } from "./overlayShift";
 import { fitAll } from "./useLeafletMap";
+import { mapOverlays, openCard, sheetCover } from "./visibleArea";
 
 const CARD_MARGIN = 28;
 const FIT_PADDING = 56;
@@ -19,27 +18,6 @@ const CENTRE_SETTLE_MS = 250;
 const CENTRE_SECONDS = 0.35;
 /** A hovered pin this close to the visible centre stays put. */
 const CENTRE_TOLERANCE = 24;
-
-const openCard = (): HTMLElement | null => {
-  const card = document.getElementById(DOM_IDS.card);
-  return card && !card.hidden ? card : null;
-};
-
-/** Pixels of the map under the phone sheet once it rests at `detent` (it may still be moving there). */
-function sheetCover(map: L.Map, detent: SheetDetent): number {
-  const panel = document.getElementById(DOM_IDS.panel);
-  if (!panel || detent === "peek") return 0;
-  const peekHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--peek")) || 0;
-  const offsets = sheetOffsets({ sheetHeight: panel.offsetHeight, peekHeight, viewportHeight: window.innerHeight });
-  const top = window.innerHeight - panel.offsetHeight + offsets[detent];
-  return Math.max(0, map.getContainer().getBoundingClientRect().bottom - top);
-}
-
-/** What covers the map: the open card, and on phones the open sheet. */
-function overlays(map: L.Map, phone: boolean, detent: SheetDetent): MapOverlays {
-  const card = openCard();
-  return { card: card && { width: card.offsetWidth, height: card.offsetHeight }, sheet: phone ? sheetCover(map, detent) : 0 };
-}
 
 /**
  * Performs the store's one-shot camera requests (fly to a place, fit a day, fit all), keeps the
@@ -105,7 +83,7 @@ export function useMapIntents(handle: MapHandle | null): void {
     const flyToPoint = (lat: number, lng: number) => {
       const zoom = Math.max(map.getZoom(), FLY_ZOOM);
       const { phone, sheet } = store.getState();
-      const shift = overlayShift(phone, overlays(map, phone, sheet));
+      const shift = overlayShift(phone, mapOverlays(map, phone, sheet));
       const target = map.unproject(map.project([lat, lng], zoom).add(shift), zoom);
       const instant = prefersReducedMotion() || (map.getCenter().distanceTo(target) < 5 && map.getZoom() === zoom);
       intentMove(
@@ -155,7 +133,7 @@ export function useMapIntents(handle: MapHandle | null): void {
       if (!target || flying || id === selected) return;
       const pin = map.latLngToContainerPoint([target.item.lat, target.item.lng]);
       const size = map.getSize();
-      const shift = overlayShift(phone, overlays(map, phone, sheet));
+      const shift = overlayShift(phone, mapOverlays(map, phone, sheet));
       const offset = centringPan([pin.x, pin.y], [size.x, size.y], shift, CENTRE_TOLERANCE);
       if (!offset) return;
       const animate = !prefersReducedMotion();

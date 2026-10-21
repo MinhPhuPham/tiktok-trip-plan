@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import logging
 import re
 
 import httpx
@@ -14,9 +15,10 @@ from tiktok_trip import export
 from tiktok_trip.config import Secrets
 from tiktok_trip.context import Context
 from tiktok_trip.errors import UserFacingError
+from tiktok_trip.freshness import mark_enriched
 from tiktok_trip.http import RateLimiter
-from tiktok_trip.models import Candidate, ReviewRow
-from tiktok_trip.storage import save_model, save_models, write_csv
+from tiktok_trip.models import Candidate, Place, ReviewRow
+from tiktok_trip.storage import load_models, save_model, save_models, write_csv
 
 
 def seed(ctx: Context) -> None:
@@ -148,3 +150,17 @@ def test_run_fails_when_server_key_is_in_output(ctx: Context) -> None:
     (ctx.paths.output / "extra.txt").write_text("key=AIzaSERVER-secret-0123")
     with pytest.raises(UserFacingError, match=r"extra\.txt"):
         export.run(keyed)
+
+
+def test_run_warns_when_places_were_not_enriched(
+    ctx: Context, caplog: pytest.LogCaptureFixture
+) -> None:
+    seed(ctx)
+    with caplog.at_level(logging.WARNING):
+        export.run(ctx)
+    assert any("tiktok-trip enrich" in r.getMessage() for r in caplog.records)
+    caplog.clear()
+    mark_enriched(ctx.paths, load_models(ctx.paths.places_file, Place))
+    with caplog.at_level(logging.WARNING):
+        export.run(ctx)
+    assert not any("enrich" in r.getMessage() for r in caplog.records)

@@ -142,3 +142,13 @@ def test_export_dataset_leaves_removed_places_out(ctx: Context) -> None:
     data = load_export_data(ctx)
     assert [p.id for p in data.places] == ["gp:PUPPY", "gp:SK"]
     assert unique_videos(data.places) == [*PUPPY.videos, *SU_KEM.videos]
+
+
+def test_resolve_keeps_every_enrich_field_of_an_existing_place() -> None:
+    enriched = MAU_DICH.model_copy(
+        update={"tags": ["breakfast", "lunch"], "rating": 4.5, "rating_count": 120}
+    )
+    fresh = MAU_DICH.model_copy(update={"tags": [], "rating": None, "rating_count": None})
+    carried = carry_enrichment(enriched, fresh)
+    assert carried.tags == ["breakfast", "lunch"]
+    assert (carried.rating, carried.rating_count) == (4.5, 120)

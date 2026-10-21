@@ -77,7 +77,9 @@ def _run_from(
             console.print(
                 f"[yellow]{pending} candidate(s) need a human decision.[/] "
                 "Run [bold]tiktok-trip review[/], then [bold]tiktok-trip run --from resolve[/] "
-                "(re-applies every decision from the HTTP cache, no new API calls)."
+                "(re-applies every decision from the HTTP cache, no new API calls, and continues "
+                "with enrich, spatial, nearby, route and export). Never run the later steps one "
+                "by one without enrich."
             )
             raise typer.Exit(code=2)
 

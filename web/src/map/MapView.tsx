@@ -1,12 +1,14 @@
 import { DOM_IDS } from "../app/ids";
 import { useTripModel } from "../data/hooks";
 import { useT } from "../i18n/useT";
+import { useLocator } from "../location/useLocator";
 import { useRoadGeometry } from "../routing/useRoadGeometry";
 import { useTripStore } from "../state/hooks";
 import type { TripState } from "../state/store";
 import { Icon } from "../ui/Icon";
 import { GOOGLE_ID } from "./basemapChoice";
 import { LayersPopover } from "./LayersPopover";
+import { LocateControl } from "./LocateControl";
 import { MapTools } from "./MapTools";
 import { useBasemap } from "./useBasemap";
 import { useCardDismiss } from "./useCardDismiss";
@@ -19,6 +21,7 @@ import { useNearbyLayer } from "./useNearbyLayer";
 import { usePlaceLayer } from "./usePlaceLayer";
 import { useRouteLayer } from "./useRouteLayer";
 import { useTilePreload } from "./useTilePreload";
+import { useUserLocation } from "./useUserLocation";
 import "./map.css";
 
 const selectGoogleShown = (s: TripState) => s.activeBasemap === GOOGLE_ID;
@@ -43,12 +46,15 @@ export function MapView() {
   useMapIntents(handle);
   useCardDismiss(handle);
   useTilePreload(handle, basemap.raster);
+  useUserLocation(handle);
+  const locateUnavailable = useLocator();
 
   return (
     <>
       {data.google ? <div id={DOM_IDS.googleMap} aria-hidden="true" hidden={!googleShown} /> : null}
       <div ref={ref} id={DOM_IDS.map} role="region" tabIndex={-1} aria-label={t.t("map_label", { city: data.city })} />
       <MapTools />
+      {handle ? <LocateControl handle={handle} unavailable={locateUnavailable} /> : null}
       <LayersPopover basemapIds={basemap.ids} pending={basemap.pending} onChoose={basemap.choose} />
       {failed ? (
         <div className="map-error">

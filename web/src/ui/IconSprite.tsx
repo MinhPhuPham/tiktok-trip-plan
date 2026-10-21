@@ -29,6 +29,19 @@ const sprite = (
     <symbol id="i-compass" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" strokeDasharray="3 5" /><path d="M32 6v8M32 50v8M6 32h8M50 32h8" /><path d="m32 20 6 12-6 12-6-12z" /></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 8v4" /><path d="M12 16h.01" /></symbol>
     <symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></symbol>
+    <symbol id="i-locate" viewBox="0 0 24 24"><path d="M2 12h3M19 12h3M12 2v3M12 19v3" /><circle cx="12" cy="12" r="7" /></symbol>
+    <symbol id="i-locate-fixed" viewBox="0 0 24 24"><path d="M2 12h3M19 12h3M12 2v3M12 19v3" /><circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="3" fill="currentColor" /></symbol>
+    <symbol id="i-locate-off" viewBox="0 0 24 24"><path d="M2 12h3M19 12h3M12 2v3M12 19v3" /><path d="M7.11 7.11A7 7 0 0 0 16.89 16.89" /><path d="M18.71 13.96A7 7 0 0 0 10.04 5.29" /><path d="m2 2 20 20" /></symbol>
+    <symbol id="i-spinner" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56" /></symbol>
+    <symbol id="i-sunrise" viewBox="0 0 24 24"><path d="M12 2v8" /><path d="m4.93 10.93 1.41 1.41" /><path d="M2 18h2" /><path d="M20 18h2" /><path d="m19.07 10.93-1.41 1.41" /><path d="M22 22H2" /><path d="m8 6 4-4 4 4" /><path d="M16 18a4 4 0 0 0-8 0" /></symbol>
+    <symbol id="i-sunset" viewBox="0 0 24 24"><path d="M12 10V2" /><path d="m4.93 10.93 1.41 1.41" /><path d="M2 18h2" /><path d="M20 18h2" /><path d="m19.07 10.93-1.41 1.41" /><path d="M22 22H2" /><path d="m16 6-4 4-4-4" /><path d="M16 18a4 4 0 0 0-8 0" /></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></symbol>
+    <symbol id="i-mountain" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z" /></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></symbol>
     <symbol id="i-offline" viewBox="0 0 64 64"><path d="M8 24c13-11 35-11 48 0" /><path d="M16 33c9-7 23-7 32 0" /><path d="M25 42c4-3 10-3 14 0" /><circle cx="32" cy="51" r="2.5" /><path d="M10 10l44 44" /></symbol>
   </svg>
 );
@@ -36,7 +49,8 @@ const sprite = (
 export const ICON_NAMES = [
   "food", "cafe", "attraction", "other", "home", "target", "layers", "fit", "search", "external", "play",
   "route", "chevron", "chevron-left", "chevron-right", "share", "plus-square", "x", "eye-off", "eye", "pencil",
-  "check", "download", "copy", "more", "compass", "offline", "alert", "warn",
+  "check", "download", "copy", "more", "compass", "offline", "alert", "warn", "locate", "locate-fixed", "locate-off", "spinner",
+  "sunrise", "sunset", "cloud", "moon", "mountain", "camera", "leaf", "users", "bag",
 ] as const;
 export type IconName = (typeof ICON_NAMES)[number];
 

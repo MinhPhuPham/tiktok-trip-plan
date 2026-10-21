@@ -104,7 +104,7 @@ export function normalizePlan(model: TripModel, plan: Plan): TripPlan {
     for (const stop of day.stops) {
       if (stop.number != null) visitCount += 1;
       if (stop.kind === "place" && stop.ref && model.placeById.has(stop.ref) && !placeSlots.has(stop.ref)) {
-        placeSlots.set(stop.ref, { day: day.day, stop: stop.number });
+        placeSlots.set(stop.ref, { day: day.day, stop: stop.number, slot: stop.slot ?? null });
       }
     }
   }

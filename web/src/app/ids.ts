@@ -16,6 +16,8 @@ export const DOM_IDS = {
   fitButton: "fitBtn",
   installButton: "installBtn",
   installPopover: "installPop",
+  locateButton: "locateBtn",
+  locatePopover: "locatePop",
   tabPlan: "tab-plan",
   tabPlaces: "tab-places",
   viewPlan: "view-plan",

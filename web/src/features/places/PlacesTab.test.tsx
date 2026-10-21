@@ -1,7 +1,9 @@
 import { act, fireEvent, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { DOM_IDS } from "../../app/ids";
+import { stubDialog } from "../../test/dialog";
 import { ROW_HOVER_DELAY_MS } from "../../state/useRowHover";
+import { makeTrip } from "../../test/fixtures";
 import { renderTrip } from "../../test/renderTrip";
 import { Toast } from "../../ui/Toast";
 import { PlacesTab } from "./PlacesTab";
@@ -13,11 +15,15 @@ const listed = () =>
     [...name.childNodes].flatMap((node) => (node.nodeType === Node.TEXT_NODE ? [node.textContent] : [])).join(""),
   );
 
-function openFilters() {
-  fireEvent.click(screen.getByRole("button", { name: /Filters/ }));
+/** Breakfast at a (must, food) and b (high, cafe), lunch at b and c (unrated attraction). */
+function taggedTrip() {
+  const data = makeTrip();
+  const tags: Record<string, string[]> = { a: ["breakfast"], b: ["breakfast", "lunch"], c: ["lunch"] };
+  return { ...data, places: data.places.map((p) => ({ ...p, tags: tags[p.id] ?? [] })) };
 }
 
 describe("PlacesTab", () => {
+  beforeAll(stubDialog);
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
@@ -66,57 +72,88 @@ describe("PlacesTab", () => {
     expect(listed()).toEqual(["Phở Gia Truyền"]);
   });
 
-  it("filters by day, including places not in the plan", () => {
+  it("filters by day with a menu that counts each day's places", () => {
     renderTrip(<PlacesTab />);
-    const days = screen.getByRole("group", { name: "day" });
-    fireEvent.click(within(days).getByRole("button", { name: "Day 1" }));
-    expect(listed()).toEqual(["Phở Gia Truyền"]);
-    fireEvent.click(within(days).getByRole("button", { name: "not_planned" }));
-    expect(within(days).getByRole("button", { name: "not_planned" })).toHaveAttribute("aria-pressed", "true");
-    expect(listed()).toEqual(["Cà phê Đá", "Bảo tàng"]);
-  });
-
-  it("filters by direction with the compass and counts active filters", () => {
-    renderTrip(<PlacesTab />);
-    const toggle = screen.getByRole("button", { name: /Filters/ });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    openFilters();
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    const compass = screen.getByRole("group", { name: "direction" });
-    expect(within(compass).getByRole("button", { name: "W – W" })).toBeDisabled();
-    const east = within(compass).getByRole("button", { name: "E – East" });
-    fireEvent.click(east);
-    expect(east).toHaveAttribute("aria-pressed", "true");
-    expect(within(compass).getByRole("button", { name: "all_directions" })).toHaveAttribute("aria-pressed", "false");
-    expect(listed()).toEqual(["Cà phê Đá"]);
-    expect(toggle).toHaveTextContent("1");
-    fireEvent.click(screen.getByRole("button", { name: "No direction" }));
-    expect(listed()).toEqual(["Cà phê Đá", "Bảo tàng"]);
-    fireEvent.click(within(compass).getByRole("button", { name: "all_directions" }));
-    expect(listed()).toHaveLength(3);
-  });
-
-  it("filters by priority, category and tag", () => {
-    renderTrip(<PlacesTab />);
-    openFilters();
-    const priority = screen.getByRole("group", { name: "priority" });
-    expect(within(priority).getAllByRole("button").map((b) => b.textContent)).toEqual([
-      "★★★★Must go",
-      "★★★High",
-      "unrated",
+    const day = screen.getByRole("combobox", { name: "day" });
+    expect([...day.querySelectorAll("option")].map((o) => o.textContent)).toEqual([
+      "All days",
+      "Day 1 · 1 places",
+      "not_planned · 2 places",
     ]);
-    fireEvent.click(within(priority).getByRole("button", { name: /unrated/ }));
-    expect(listed()).toEqual(["Bảo tàng"]);
-    fireEvent.click(within(priority).getByRole("button", { name: /unrated/ }));
-
-    fireEvent.click(within(screen.getByRole("group", { name: "category" })).getByRole("button", { name: "Cafe" }));
-    expect(listed()).toEqual(["Cà phê Đá"]);
-    fireEvent.click(within(screen.getByRole("group", { name: "category" })).getByRole("button", { name: "Cafe" }));
-
-    const tag = within(screen.getByRole("group", { name: "tags" })).getByRole("button", { name: /Local favourite/ });
-    expect(tag).toHaveTextContent("1");
-    fireEvent.click(tag);
+    fireEvent.change(day, { target: { value: "1" } });
     expect(listed()).toEqual(["Phở Gia Truyền"]);
+    expect(day.closest(".select")?.querySelector(".select-v")).toHaveTextContent(/^Day 1$/);
+    fireEvent.change(day, { target: { value: "none" } });
+    expect(listed()).toEqual(["Cà phê Đá", "Bảo tàng"]);
+  });
+
+  it("filters by priority and category with menus", () => {
+    renderTrip(<PlacesTab />);
+    const priority = screen.getByRole("combobox", { name: "priority" });
+    expect([...priority.querySelectorAll("option")].map((o) => o.textContent)).toEqual(["all", "Must go", "High", "unrated"]);
+    fireEvent.change(priority, { target: { value: "none" } });
+    expect(listed()).toEqual(["Bảo tàng"]);
+    expect(priority.closest(".select")).toHaveClass("is-on");
+    fireEvent.change(priority, { target: { value: "all" } });
+    expect(listed()).toHaveLength(3);
+
+    const category = screen.getByRole("combobox", { name: "category" });
+    fireEvent.change(category, { target: { value: "cafe" } });
+    expect(listed()).toEqual(["Cà phê Đá"]);
+    expect(category.closest(".select")?.querySelector(".select-v")).toHaveTextContent(/^Cafe$/);
+  });
+
+  it("offers Good for intents in a menu with counts, lists their union by relevance and clears them", () => {
+    const { store } = renderTrip(<PlacesTab />, { data: taggedTrip() });
+    const trigger = screen.getByRole("button", { name: "Good for" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const list = screen.getByRole("listbox", { name: "Good for" });
+    expect(list).toHaveFocus();
+    expect(list).toHaveAttribute("aria-multiselectable", "true");
+    const options = () => within(list).getAllByRole("option").map((o) => o.textContent);
+    expect(options()).toEqual(["Breakfast2", "Lunch2", "Coffee & chill1"]);
+
+    fireEvent.click(within(list).getByRole("option", { name: /Breakfast/ }));
+    expect(listed()).toEqual(["Phở Gia Truyền", "Cà phê Đá"]);
+    expect(screen.queryByRole("heading", { name: /must_go/ })).not.toBeInTheDocument();
+    fireEvent.keyDown(list, { key: "ArrowDown" });
+    fireEvent.keyDown(list, { key: " " });
+    expect(within(list).getByRole("option", { name: /Lunch/ })).toHaveAttribute("aria-selected", "true");
+    expect(listed()).toEqual(["Phở Gia Truyền", "Cà phê Đá", "Bảo tàng"]);
+    fireEvent.keyDown(list, { key: "Enter" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAccessibleName("Good for: Breakfast, Lunch");
+    expect(trigger).toHaveTextContent("Breakfast +1");
+    expect(trigger).toHaveClass("is-on");
+
+    fireEvent.change(screen.getByRole("combobox", { name: "category" }), { target: { value: "attraction" } });
+    fireEvent.click(trigger);
+    expect(options()).toEqual(["Breakfast0", "Lunch1"]);
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(store.getState().filters.intents.size).toBe(0);
+    expect(options()).toEqual(["Lunch1"]);
+    fireEvent.keyDown(list, { key: "Escape" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveFocus();
+  });
+
+  it("keeps the Good for menu in place, disabled, while the other filters leave no intent", () => {
+    renderTrip(<PlacesTab />, { data: taggedTrip() });
+    fireEvent.change(document.getElementById(DOM_IDS.search) as HTMLInputElement, { target: { value: "zzz" } });
+    act(() => {
+      vi.advanceTimersByTime(SEARCH_DELAY_MS);
+    });
+    expect(screen.getByRole("button", { name: "Good for" })).toBeDisabled();
+  });
+
+  it("leaves Good for out when no place fits any intent", () => {
+    const data = makeTrip();
+    renderTrip(<PlacesTab />, { data: { ...data, places: data.places.filter((p) => p.category !== "cafe") } });
+    expect(screen.queryByRole("button", { name: "Good for" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "direction" })).not.toBeInTheDocument();
   });
 
   it("shows an empty state whose reset clears every filter and focuses the search", () => {
@@ -127,9 +164,8 @@ describe("PlacesTab", () => {
     });
     expect(screen.getByText("no_results")).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
-    const resets = screen.getAllByRole("button", { name: "reset" });
-    expect(resets).toHaveLength(2);
-    fireEvent.click(resets[1] as HTMLElement);
+    expect(screen.getByRole("button", { name: "reset" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(store.getState().filters.q).toBe("");
     expect(document.getElementById(DOM_IDS.search)).toHaveValue("");
     expect(document.getElementById(DOM_IDS.search)).toHaveFocus();
@@ -162,10 +198,13 @@ describe("PlacesTab", () => {
   });
 
   it("speaks Vietnamese", () => {
-    renderTrip(<PlacesTab />, { lang: "vi" });
-    fireEvent.click(screen.getByRole("button", { name: /Bộ lọc/ }));
-    expect(within(screen.getByRole("group", { name: "day" })).getByRole("button", { name: "Ngày 1" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Ưu tiên high/ })).toBeInTheDocument();
+    renderTrip(<PlacesTab />, { lang: "vi", data: taggedTrip() });
+    const day = screen.getByRole("combobox", { name: "day" });
+    expect([...day.querySelectorAll("option")].map((o) => o.textContent).slice(0, 2)).toEqual(["Tất cả các ngày", "Ngày 1 · 1 địa điểm"]);
+    fireEvent.click(screen.getByRole("button", { name: "Gợi ý cho" }));
+    const list = screen.getByRole("listbox", { name: "Gợi ý cho" });
+    expect(within(list).getByRole("option", { name: /Ăn sáng/ })).toBeInTheDocument();
+    expect(within(list).getByRole("option", { name: /Cà phê chill/ })).toBeInTheDocument();
   });
 
   it("reports the place row the mouse settles on and clears it on leave or unmount", () => {

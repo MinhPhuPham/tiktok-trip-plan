@@ -1,7 +1,8 @@
 import { use, useMemo } from "react";
 import { selectPlan, useTripStore, useShallow } from "../state/hooks";
 import { TripModelContext } from "./context";
-import { listedPlaces } from "./filters";
+import { intentCounts, listedPlaces } from "./filters";
+import type { IntentId } from "./intents";
 import type { TripModel } from "./model";
 import { normalizePlan } from "./plan";
 import type { MapPlace, Plan, TripPlan } from "./types";
@@ -30,10 +31,21 @@ export function useTripPlan(): TripPlan {
   return getTripPlan(model, plan);
 }
 
+const useListInput = () =>
+  useTripStore(useShallow((s) => ({ filters: s.filters, hidden: s.hidden, showHidden: s.showHidden })));
+
 /** The Places tab rows. */
 export function useListedPlaces(): MapPlace[] {
   const model = useTripModel();
   const plan = useTripPlan();
-  const input = useTripStore(useShallow((s) => ({ filters: s.filters, hidden: s.hidden, showHidden: s.showHidden })));
+  const input = useListInput();
   return useMemo(() => listedPlaces(model, plan, input), [model, plan, input]);
+}
+
+/** How many places each "Good for" intent would list with the other filters as they are. */
+export function useIntentCounts(): Map<IntentId, number> {
+  const model = useTripModel();
+  const plan = useTripPlan();
+  const input = useListInput();
+  return useMemo(() => intentCounts(model, plan, input), [model, plan, input]);
 }

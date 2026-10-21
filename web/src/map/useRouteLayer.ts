@@ -4,7 +4,7 @@ import type { TripDay } from "../data/types";
 import { getTranslator } from "../i18n/useT";
 import type { RoadRouter } from "../routing/router";
 import { useTripStoreApi } from "../state/hooks";
-import { selectMapFocusDay, type TripState } from "../state/store";
+import { selectRouteDays, type TripState } from "../state/store";
 import L from "./leaflet";
 import { cssVar, setLayerOn, watch, type MapHandle } from "./mapCore";
 import { daySegments, type DaySegments, type RoadLookup } from "./polyline";
@@ -22,7 +22,7 @@ interface DayLayers {
 /** Legs whose road is not known yet: dashes read as "approximate", casing and line dash in step. */
 const APPROXIMATE_DASH = "6 7";
 
-const selectRouteInputs = (s: TripState) => [s.overlays.routes, selectMapFocusDay(s)] as const;
+const selectRouteInputs = (s: TripState) => [s.overlays.routes, selectRouteDays(s)] as const;
 
 const shapeOf = ({ solid, approximate }: DaySegments): string =>
   `${solid.map((run) => run.length).join(",")}|${approximate.length}`;
@@ -30,7 +30,8 @@ const shapeOf = ({ solid, approximate }: DaySegments): string =>
 /**
  * One road-following line per plan day (casing under the day colour, tooltip, click opens the day
  * in the Plan tab; a finger tap beside a stop opens the stop instead). Legs whose road is still unknown are drawn straight and dashed until it
- * arrives; then only that day's lines change shape. The Plan tab's open day adds numbered chips.
+ * arrives; then only that day's lines change shape. One day (the Plan tab's open day or the Places
+ * tab's day filter, see selectRouteDays) is drawn alone with its numbered chips.
  */
 export function useRouteLayer(handle: MapHandle | null, scheme: "dark" | "light", roads: RoadRouter): void {
   const model = useTripModel();
@@ -77,14 +78,14 @@ export function useRouteLayer(handle: MapHandle | null, scheme: "dark" | "light"
       return { route: L.layerGroup([casing, dashedCasing, line, dashed]), lines, chips, refresh };
     };
 
-    const show = ([routesOn, focusDay]: ReturnType<typeof selectRouteInputs>) => {
+    const show = ([routesOn, shown]: ReturnType<typeof selectRouteInputs>) => {
       setLayerOn(map, routeLayer, routesOn);
       routeLayer.clearLayers();
       for (const [day, layers] of days) {
-        if (focusDay == null || focusDay === day) routeLayer.addLayer(layers.route);
+        if (shown === "all" || shown === day) routeLayer.addLayer(layers.route);
       }
-      const focused = focusDay == null ? undefined : days.get(focusDay);
-      if (focused) routeLayer.addLayer(focused.chips);
+      const single = typeof shown === "number" ? days.get(shown) : undefined;
+      if (single) routeLayer.addLayer(single.chips);
     };
 
     const stopPlan = watch(

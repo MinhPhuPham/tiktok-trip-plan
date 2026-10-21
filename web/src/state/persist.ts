@@ -4,7 +4,8 @@ import { storage } from "../lib/storage";
 /**
  * What the app remembers per browser, versioned: preferences across trips, hidden places per trip.
  * v1 is the old hand-written app's unversioned keys (tripmap:lang, tripmap:<city>:hidden, …),
- * read once as a fallback so an upgrade keeps the user's choices.
+ * read once as a fallback so an upgrade keeps the user's choices. Keys a newer app dropped
+ * (v2 `filtersOpen`, the old filters disclosure) are ignored when read and gone after the next save.
  */
 const PERSIST_VERSION = 2;
 const PREFIX = "tripmap:";
@@ -20,7 +21,6 @@ export interface StoredPrefs {
   lang: string | null;
   basemap: string | null;
   overlays: Partial<Overlays>;
-  filtersOpen: boolean;
 }
 
 export interface StoredTrip {
@@ -46,7 +46,6 @@ function parsePrefs(raw: unknown): StoredPrefs | null {
     lang: stringOrNull(raw.lang),
     basemap: stringOrNull(raw.basemap),
     overlays: parseOverlays(raw.overlays),
-    filtersOpen: raw.filtersOpen === true,
   };
 }
 
@@ -68,7 +67,6 @@ function legacyPrefs(): StoredPrefs {
     lang: stringOrNull(storage.readText(`${PREFIX}lang`)),
     basemap: stringOrNull(storage.readText(`${PREFIX}basemap`)),
     overlays,
-    filtersOpen: storage.readText(`${PREFIX}filters-open`) === "1",
   };
 }
 
