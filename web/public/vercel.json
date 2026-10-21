@@ -5,7 +5,7 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "source": "/(index\\.html|sw\\.js|manifest\\.webmanifest|trip\\.json|offline\\.json)",
+      "source": "/(index\\.html|sw\\.js|manifest\\.webmanifest|trip\\.json|offline\\.json|og-image\\.png|robots\\.txt)",
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     }
   ]

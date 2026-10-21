@@ -1,5 +1,6 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { prefersReducedMotion } from "../../app/viewport";
 import { useTripModel, useTripPlan } from "../../data/hooks";
 import type { TripPlan } from "../../data/types";
 import { useT } from "../../i18n/useT";
@@ -65,16 +66,29 @@ function PlanDays({ t, plan, unplacedOpen, onUnplacedOpenChange }: PlanDaysProps
   const focusDay = useFocusDay();
   const hidden = useHiddenIds();
   const selected = useSelectedId();
+  const store = useTripStoreApi();
   const { openCard, setEditing, toggleFocusDay } = useTripActions();
-  /* A day above may close: keep the clicked header in place (as far as the list scrolls) so its day unfolds under it. */
+  /*
+   * On phones an opened day lowers the sheet to half (its route shows above) and moves to the top of
+   * the list. Otherwise a day above may close: keep the clicked header in place so its day unfolds under it.
+   */
   const toggleDay = useCallback(
     (day: number, toggle: HTMLElement) => {
       const before = toggle.getBoundingClientRect().top;
-      flushSync(() => toggleFocusDay(day, { collapseSheet: false }));
+      flushSync(() => toggleFocusDay(day, { sheet: "half" }));
+      const list = scrollParent(toggle);
+      const section = toggle.closest(".day");
+      if (!list || !section) return;
+      const { phone, focusDay } = store.getState();
+      if (phone && focusDay === day) {
+        const top = list.scrollTop + section.getBoundingClientRect().top - list.getBoundingClientRect().top;
+        list.scrollTo({ top, behavior: prefersReducedMotion() ? "instant" : "smooth" });
+        return;
+      }
       const shift = toggle.getBoundingClientRect().top - before;
-      if (shift) scrollParent(toggle)?.scrollBy({ top: shift, behavior: "instant" });
+      if (shift) list.scrollBy({ top: shift, behavior: "instant" });
     },
-    [toggleFocusDay],
+    [store, toggleFocusDay],
   );
   const editDay = useCallback((day: number) => setEditing(true, day), [setEditing]);
   if (!plan.days.length) {

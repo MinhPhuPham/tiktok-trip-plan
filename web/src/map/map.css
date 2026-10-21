@@ -11,6 +11,19 @@
   transition: background-color var(--dur-1) ease-out, color var(--dur-1) ease-out;
 }
 .tool[aria-expanded="true"] { background: var(--surface-3); border-color: var(--line-strong); }
+.install-tool .icon { color: var(--accent-text); }
+.install-pop {
+  position: absolute; top: calc(100% + 8px); right: 0; width: 300px; padding: 14px 16px 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-l); box-shadow: var(--shadow-3);
+  color: var(--text); font-size: var(--fs-3); line-height: 1.45; transform-origin: top right;
+}
+.install-pop.is-entering { animation: pop-in var(--dur-2) var(--ease-out); }
+.install-pop h2 { margin: 0; font-size: var(--fs-2); font-weight: 650; letter-spacing: -0.01em; }
+.install-pop p { margin: 4px 0 0; color: var(--text-2); text-wrap: pretty; }
+.install-steps { display: grid; gap: 8px; margin: 12px 0 0; padding-left: 20px; }
+.install-steps li::marker { color: var(--text-3); font-variant-numeric: tabular-nums; }
+.install-glyph { width: 16px; height: 16px; margin: 0 3px; vertical-align: -3px; color: var(--accent-text); }
+.install-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .pop {
   position: absolute; top: 64px; right: 12px; z-index: 1002; width: 320px; max-height: calc(100% - 140px); overflow-y: auto;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-l); box-shadow: var(--shadow-3);
@@ -130,6 +143,7 @@
   .pop-lang { display: block; }
   .pop { left: 12px; right: 12px; width: auto; top: 68px; max-height: calc(100% - 84px); }
   .tool .label { display: none; }
+  .install-pop { position: fixed; top: 68px; left: 12px; right: 12px; width: auto; }
   .leaflet-control-zoom { display: none; }
   .has-card .leaflet-control-scale, .has-card .leaflet-control-attribution { visibility: hidden; }
 }

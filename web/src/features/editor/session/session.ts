@@ -7,7 +7,7 @@ import type { TripState, TripStoreApi } from "../../../state/store";
 import { MAX_DAYS } from "../logic/constants";
 import { buildContext, slotById, type EditorContext } from "../logic/context";
 import { computePlan } from "../logic/coverage";
-import { issueCounts, summaryText } from "../logic/issues";
+import { errorsText } from "../logic/issues";
 import { insertIndex, pickSlot } from "../logic/placement";
 import { editableDays, toPlanJson, type EditableStop } from "../logic/planJson";
 import type { ComputedPlan, PlanJson, TimedStop, UnplacedEntry } from "../logic/types";
@@ -59,10 +59,11 @@ export interface SessionState {
   /** Why each place is out of the plan, by ref (entries for planned places are ignored). */
   unplaced: UnplacedNotes;
   expanded: ReadonlySet<string>;
+  /** The snapshot last written to this browser (every edit autosaves). */
   savedSnapshot: string;
   saveError: boolean;
+  /** A draft made from an older generated plan; autosave waits until the user restores or discards it. */
   staleDraft: StoredDraft | null;
-  showNotes: boolean;
   /** The last destructive edit, while it can be undone; `toast` is the id of its Undo toast. */
   undo: { snap: Snapshot; focus: FocusTarget; toast: number | null } | null;
   /**
@@ -89,7 +90,6 @@ export interface Derived {
 
 export interface SessionActions {
   toggle: (uid: string) => void;
-  toggleNotes: () => void;
   moveBy: (uid: string, delta: -1 | 1, part?: "main" | "up" | "down") => void;
   moveToDay: (uid: string, day: number, position?: number) => void;
   dropOnStop: (uid: string, targetUid: string, after: boolean) => void;
@@ -105,7 +105,6 @@ export interface SessionActions {
   commitNote: (uid: string, value: string) => void;
   undo: () => void;
   reset: () => void;
-  save: () => void;
   restoreDraft: () => void;
   discardDraft: () => void;
   openPicker: (day: number) => void;
@@ -260,7 +259,6 @@ export function createEditorSession(model: TripModel, tripStore: TripStoreApi): 
     savedSnapshot: derive(start).snapshot,
     saveError: false,
     staleDraft: draft && !applied ? draft : null,
-    showNotes: false,
     undo: null,
     focus: tripStore.getState().editing ? { key: openingFocusKey(tripStore.getState()), seq: ++focusSeq } : null,
     live: { text: "", seq: 0 },
@@ -284,6 +282,7 @@ export function createEditorSession(model: TripModel, tripStore: TripStoreApi): 
     stop.ref === REST_REF ? restName(model, getTranslator(model, tripStore.getState().lang)) : (ctx.nodes.get(stop.ref)?.name ?? stop.ref);
 
   const emitChange = (): void => {
+    persist();
     const state = get();
     const { computed, leftOut, snapshot } = derive(state);
     if (snapshot === baselineSnapshot) {
@@ -313,6 +312,26 @@ export function createEditorSession(model: TripModel, tripStore: TripStoreApi): 
     }, ANNOUNCE_BATCH_MS);
   };
 
+  /** Autosave: the edited plan goes to this browser's draft, the generated one clears it. */
+  const persist = (): void => {
+    const state = get();
+    const { snapshot } = derive(state);
+    if (state.staleDraft || snapshot === state.savedSnapshot) return;
+    let ok = true;
+    if (snapshot === baselineSnapshot) removeDraft(city);
+    else {
+      ok = writeDraft(city, {
+        v: DRAFT_VERSION,
+        basis,
+        savedAt: new Date().toISOString(),
+        days: stripUids(state.days),
+        unplaced: state.unplaced,
+      });
+    }
+    if (!ok && !state.saveError) announce(text().t("save_failed"));
+    set(ok ? { saveError: false, savedSnapshot: snapshot } : { saveError: true });
+  };
+
   const requestFocus = (target: FocusTarget | null): Partial<SessionState> =>
     target ? { focus: { key: focusKey(target), seq: ++focusSeq } } : {};
 
@@ -324,11 +343,11 @@ export function createEditorSession(model: TripModel, tripStore: TripStoreApi): 
     const { computed } = derive(get());
     return {
       ends: computed.days.map((d) => d.stops[d.stops.length - 1]?.arrive_min ?? null),
-      summary: summaryText(text().t, issueCounts(computed.issues)),
+      summary: errorsText(text().t, computed.issues),
     };
   };
 
-  /** What a screen reader user cannot see change: day end times and the check counts. */
+  /** What a screen reader user cannot see change: day end times and the problems to fix. */
   const changesBetween = (before: Digest, after: Digest): string[] => {
     const parts: string[] = [];
     const { t, time } = text();
@@ -412,7 +431,6 @@ export function createEditorSession(model: TripModel, tripStore: TripStoreApi): 
         tripActions().requestMap({ type: "fly", id: at.stop.ref });
       }
     },
-    toggleNotes: () => set((s) => ({ showNotes: !s.showNotes })),
     moveBy: (uid, delta, part = "main") => {
       const { days } = get();
       const at = locate(days, uid);
@@ -550,23 +568,6 @@ export function createEditorSession(model: TripModel, tripStore: TripStoreApi): 
       );
       offerUndo(text().t("announce_reset"), snap, { key: "reset" });
     },
-    save: () => {
-      const state = get();
-      const stored: StoredDraft = {
-        v: DRAFT_VERSION,
-        basis,
-        savedAt: new Date().toISOString(),
-        days: stripUids(state.days),
-        unplaced: state.unplaced,
-      };
-      const ok = writeDraft(city, stored);
-      set({
-        saveError: !ok,
-        ...(ok ? { savedSnapshot: derive(state).snapshot, staleDraft: null } : {}),
-        ...requestFocus({ key: ok ? "done" : "export" }),
-      });
-      announce(text().t(ok ? "saved" : "save_failed"));
-    },
     restoreDraft: () => {
       const stale = get().staleDraft;
       if (!stale) return;
@@ -574,7 +575,8 @@ export function createEditorSession(model: TripModel, tripStore: TripStoreApi): 
     },
     discardDraft: () => {
       removeDraft(city);
-      set({ staleDraft: null });
+      set({ staleDraft: null, savedSnapshot: baselineSnapshot });
+      persist();
     },
     openPicker: (day) => set((s) => ({ picker: { ...s.picker, open: true, day } })),
     closePicker: () =>

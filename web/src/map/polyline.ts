@@ -2,6 +2,9 @@ import { CENTER_KINDS, CENTER_REF, type PlanStop } from "../data/types";
 
 export type LatLng = [number, number];
 
+/** A stop as a leg end: its travel-matrix identity and where it is drawn. */
+export type LegEnd = Pick<PlanStop, "kind" | "ref"> & { lat: number; lng: number };
+
 /** Google encoded polyline (precision 5 by default) to [[lat, lng], …]. */
 export function decodePolyline(text: string, precision = 5): LatLng[] {
   const factor = 10 ** precision;
@@ -28,6 +31,31 @@ export function decodePolyline(text: string, precision = 5): LatLng[] {
   return points;
 }
 
+/** [[lat, lng], …] to a Google encoded polyline (the inverse of decodePolyline). */
+export function encodePolyline(points: readonly LatLng[], precision = 5): string {
+  const factor = 10 ** precision;
+  let text = "";
+  const push = (delta: number) => {
+    let value = delta < 0 ? ~(delta << 1) : delta << 1;
+    while (value >= 0x20) {
+      text += String.fromCharCode((0x20 | (value & 0x1f)) + 63);
+      value >>>= 5;
+    }
+    text += String.fromCharCode(value + 63);
+  };
+  let lastLat = 0;
+  let lastLng = 0;
+  for (const [lat, lng] of points) {
+    const y = Math.round(lat * factor);
+    const x = Math.round(lng * factor);
+    push(y - lastLat);
+    push(x - lastLng);
+    lastLat = y;
+    lastLng = x;
+  }
+  return text;
+}
+
 /** The travel-matrix node of a stop: its place or spot id, "center" for start, end and rest. */
 const legNode = (stop: Pick<PlanStop, "kind" | "ref">): string =>
   CENTER_KINDS.has(stop.kind) || !stop.ref ? CENTER_REF : stop.ref;
@@ -35,7 +63,8 @@ const legNode = (stop: Pick<PlanStop, "kind" | "ref">): string =>
 export const legKey = (from: Pick<PlanStop, "kind" | "ref">, to: Pick<PlanStop, "kind" | "ref">): string =>
   `${legNode(from)}>${legNode(to)}`;
 
-export type RoadLookup = (from: Pick<PlanStop, "kind" | "ref">, to: Pick<PlanStop, "kind" | "ref">) => readonly LatLng[];
+/** The road between two stops; null while it is unknown (drawn straight and dashed). */
+export type RoadLookup = (from: LegEnd, to: LegEnd) => readonly LatLng[] | null;
 
 /** Road geometry per leg from data.roads ("<from>><to>" → encoded polyline), decoded once. */
 export function createRoadLookup(roads: Readonly<Record<string, string>>): RoadLookup {
@@ -43,20 +72,40 @@ export function createRoadLookup(roads: Readonly<Record<string, string>>): RoadL
   return (from, to) => {
     const key = legKey(from, to);
     const encoded = Object.hasOwn(roads, key) ? roads[key] : undefined;
-    if (typeof encoded !== "string" || !encoded) return [];
+    if (typeof encoded !== "string" || !encoded) return null;
     let points = decoded.get(key);
     if (!points) decoded.set(key, (points = decodePolyline(encoded)));
     return points;
   };
 }
 
-/** The stops joined along each leg's road (straight when a leg has none); the line touches every stop. */
-export function dayLine(stops: readonly (Pick<PlanStop, "kind" | "ref"> & { lat: number; lng: number })[], road: RoadLookup): LatLng[] {
-  const points: LatLng[] = [];
+export interface DaySegments {
+  /** Runs of consecutive legs with a known road, each touching its stops. */
+  solid: LatLng[][];
+  /** Straight stop-to-stop segments of the legs whose road is unknown. */
+  approximate: LatLng[][];
+}
+
+/** A day's stops joined along each leg's road; a leg without one breaks the run into a straight segment. */
+export function daySegments(stops: readonly LegEnd[], road: RoadLookup): DaySegments {
+  const solid: LatLng[][] = [];
+  const approximate: LatLng[][] = [];
+  let run: LatLng[] = [];
   stops.forEach((stop, i) => {
+    const point: LatLng = [stop.lat, stop.lng];
     const previous = stops[i - 1];
-    if (previous) points.push(...road(previous, stop));
-    points.push([stop.lat, stop.lng]);
+    if (previous) {
+      const leg = road(previous, stop);
+      if (leg) {
+        run.push(...leg);
+      } else {
+        if (run.length > 1) solid.push(run);
+        approximate.push([[previous.lat, previous.lng], point]);
+        run = [];
+      }
+    }
+    run.push(point);
   });
-  return points;
+  if (run.length > 1) solid.push(run);
+  return { solid, approximate };
 }

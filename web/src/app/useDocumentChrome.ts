@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useTripModel } from "../data/hooks";
 import { useLang } from "../state/hooks";
 
-/** <html lang> follows the language; the title names the trip (the app build ships a placeholder). */
+/** <html lang> follows the language; the title is the site name (exports before it keep theirs). */
 export function useDocumentChrome(): void {
   const { data } = useTripModel();
   const lang = useLang();
@@ -10,6 +10,6 @@ export function useDocumentChrome(): void {
     document.documentElement.lang = lang;
   }, [lang]);
   useEffect(() => {
-    document.title = `${data.city} · trip map`;
-  }, [data.city]);
+    if (data.site_name) document.title = data.site_name;
+  }, [data.site_name]);
 }

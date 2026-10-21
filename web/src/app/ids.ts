@@ -14,6 +14,8 @@ export const DOM_IDS = {
   layersButton: "layersBtn",
   layersPopover: "layersPop",
   fitButton: "fitBtn",
+  installButton: "installBtn",
+  installPopover: "installPop",
   tabPlan: "tab-plan",
   tabPlaces: "tab-places",
   viewPlan: "view-plan",

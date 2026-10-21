@@ -36,13 +36,19 @@
   .panel {
     position: fixed; left: 0; right: 0; bottom: 0; height: min(82dvh, 760px);
     border-right: 0; border-radius: var(--radius-l) var(--radius-l) 0 0; box-shadow: var(--shadow-3);
-    transform: translateY(calc(100% - var(--peek))); transition: transform var(--dur-3) var(--ease-out);
+    transform: translate3d(0, calc(100% - var(--peek)), 0);
     padding-bottom: env(safe-area-inset-bottom);
+    touch-action: none; --sheet-grip: 36px;
   }
-  .panel.is-open { transform: none; }
-  .sheet-handle { display: grid; place-items: center; flex: none; width: 100%; height: 32px; border: 0; background: none; padding: 0; }
+  .panel.is-dragging { will-change: transform; user-select: none; -webkit-user-select: none; }
+  .sheet-handle {
+    position: relative; z-index: 2; display: grid; place-items: center; flex: none; width: 100%;
+    height: var(--tap); margin-bottom: calc(var(--sheet-grip) - var(--tap)); border: 0; background: none; padding: 0;
+  }
   .sheet-handle span { width: 40px; height: 5px; border-radius: var(--radius-pill); background: var(--line-strong); }
-  .panel.is-open .sheet-peek { display: none; }
+  .sheet-peek { position: absolute; z-index: 1; top: var(--sheet-grip); left: 0; right: 0; }
+  .panel-body { touch-action: pan-y pinch-zoom; }
+  .panel[data-sheet="half"] .panel-body { padding-bottom: var(--sheet-cut, 0px); scroll-padding-bottom: var(--sheet-cut, 0px); }
   .panel-head { padding: 12px 16px 8px; }
   .panel-head .lang { display: none; }
 }

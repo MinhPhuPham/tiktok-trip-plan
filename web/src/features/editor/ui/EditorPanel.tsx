@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type
 import { prefersReducedMotion } from "../../../app/viewport";
 import { isTypingTarget, scrollParent } from "../../../lib/dom";
 import { MAX_DAYS } from "../logic/constants";
-import { groupIssues, issueCounts } from "../logic/issues";
+import { errorCount, groupIssues } from "../logic/issues";
 import type { SessionState } from "../session/session";
 import { AddPlaceDialog } from "./AddPlaceDialog";
 import { DayCard, type DropTarget } from "./DayCard";
@@ -78,7 +78,6 @@ export function EditorPanel() {
   const { t, lang } = useEditorText();
   const days = useSessionState((s) => s.days);
   const unplaced = useSessionState((s) => s.unplaced);
-  const savedSnapshot = useSessionState((s) => s.savedSnapshot);
   const staleDraft = useSessionState((s) => s.staleDraft);
   const root = useRef<HTMLDivElement>(null);
   const dragUid = useRef<string | null>(null);
@@ -88,24 +87,17 @@ export function EditorPanel() {
   const why: WhyIds = {
     first: `${idBase}why-first`,
     last: `${idBase}why-last`,
-    saved: `${idBase}why-saved`,
     max: `${idBase}why-max`,
     keys: `${idBase}kbd-hint`,
   };
 
-  const { computed, leftOut, snapshot } = session.derive({ days, unplaced });
+  const { computed, leftOut } = session.derive({ days, unplaced });
   const groups = useMemo(() => groupIssues(days, computed.issues), [days, computed]);
-  const counts = issueCounts(computed.issues);
-  const dirty = snapshot !== savedSnapshot;
+  const errors = errorCount(computed.issues);
   const full = days.length >= MAX_DAYS;
 
-  const jumpToIssue = () => {
-    const level = counts.errors ? "error" : "warning";
-    const first = root.current?.querySelector<HTMLElement>(
-      level === "error"
-        ? ".pe-stop.has-error, .pe-day-issues .is-error"
-        : ".pe-stop.has-warn, .pe-stop.has-error, .pe-issue.is-warn",
-    );
+  const jumpToError = () => {
+    const first = root.current?.querySelector<HTMLElement>(".pe-stop.has-error, .pe-issue.is-error");
     if (!first) return;
     const box = scrollParent(first);
     if (box) {
@@ -115,7 +107,8 @@ export function EditorPanel() {
         behavior: prefersReducedMotion() ? "auto" : "smooth",
       });
     }
-    first.querySelector<HTMLElement>(".pe-main")?.focus({ preventScroll: true });
+    const target = first.querySelector<HTMLElement>(".pe-main") ?? first.closest(".pe-day")?.querySelector<HTMLElement>("h3");
+    target?.focus({ preventScroll: true });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -175,7 +168,7 @@ export function EditorPanel() {
         onDragLeave={onDragLeave}
       >
         <div className="pe-content">
-          <EditorBar dirty={dirty} counts={counts} whySaved={why.saved} onJump={jumpToIssue} />
+          <EditorBar errors={errors} onJump={jumpToError} />
           {staleDraft ? (
             <div className="pe-banner">
               <span>{t("stale_draft")}</span>
@@ -193,7 +186,6 @@ export function EditorPanel() {
           <div hidden>
             <span id={why.first}>{t("why_first")}</span>
             <span id={why.last}>{t("why_last")}</span>
-            <span id={why.saved}>{t("why_saved")}</span>
             <span id={why.max}>{t("max_days")}</span>
           </div>
           {days.map((day, d) => (
@@ -227,7 +219,7 @@ export function EditorPanel() {
             </button>
           </div>
           <LeftOutList leftOut={leftOut} dayCount={days.length} groups={groups} />
-          <ExportSection hasErrors={counts.errors > 0} />
+          <ExportSection hasErrors={errors > 0} />
         </div>
         <SessionLiveRegion />
         <AddPlaceDialog />

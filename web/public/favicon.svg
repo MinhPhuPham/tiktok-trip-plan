@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>TwLP-Trips</title>
+  <defs></defs>
+  <rect width="32" height="32" rx="7" fill="#434AB8"/>
+  <path d="M8 8V21.5C8 23.5 9.5 25 11.5 25H17" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M21.5 25L16 16.5A6.5 6.5 0 1 1 27 16.5Z" fill="#fff" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
+  <circle cx="21.5" cy="13" r="2.5" fill="#434AB8"/>
+  <circle cx="8" cy="9" r="3.8" fill="#E8B53A"/>
+</svg>

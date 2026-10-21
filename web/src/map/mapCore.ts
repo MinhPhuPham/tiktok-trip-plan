@@ -3,6 +3,7 @@ import { placeDrawn } from "../data/filters";
 import { getTripPlan } from "../data/hooks";
 import type { TripModel } from "../data/model";
 import type { TripState, TripStoreApi } from "../state/store";
+import type { FingerReach } from "./fingerReach";
 import type { Layer, Map as LeafletMap, Renderer } from "leaflet";
 
 export const CLUSTER_OFF_ZOOM = 14;
@@ -14,6 +15,8 @@ export const CENTER_ON_TOP_ZOOM = 14;
 export const FALLBACK_VIEW: [number, number] = [10.78, 106.7];
 /** Pins, dots and routes outside the focused day or the hovered row (map.css --map-dim matches). */
 export const DIMMED_OPACITY = 0.25;
+/** The open day's stop numbers: above every marker (Leaflet's marker pane is 600), under tooltips (650). */
+export const STOP_CHIP_PANE = "stopChips";
 
 export interface MapRenderers {
   compass: Renderer;
@@ -24,6 +27,7 @@ export interface MapRenderers {
 export interface MapHandle {
   map: LeafletMap;
   renderers: MapRenderers;
+  reach: FingerReach;
 }
 
 /**

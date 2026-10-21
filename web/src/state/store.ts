@@ -1,5 +1,6 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 import type { Plan, PlanDay, PlanUnplaced } from "../data/types";
+import type { OpenDetent, SheetDetent } from "../lib/sheetSnap";
 import * as storedState from "./persist";
 import type { OverlayKey, Overlays, StoredPrefs, StoredTrip } from "./persist";
 
@@ -52,8 +53,8 @@ export interface OpenCardOptions {
 }
 
 export interface FocusDayOptions {
-  /** Collapse the phone sheet so the map shows (default true; false when the day list opened the day). */
-  collapseSheet?: boolean;
+  /** Where the phone sheet goes when a day opens: peek by default so the map shows, half from the day list. */
+  sheet?: SheetDetent;
 }
 
 export interface TripActions {
@@ -61,7 +62,8 @@ export interface TripActions {
   /** Switching tabs ends a row hover; `focusDay` (the open Plan day) stays. */
   setTab: (tab: Tab) => void;
   setPhone: (phone: boolean) => void;
-  setSheetOpen: (open: boolean) => void;
+  setSheet: (detent: SheetDetent) => void;
+  /** The handle: a collapsed sheet reopens at its last open detent, an open one collapses. */
   toggleSheet: () => void;
   /** Focus one day on the map (routes overlay turns on) or show all days with null. */
   setFocusDay: (day: number | null, options?: FocusDayOptions) => void;
@@ -106,8 +108,11 @@ export interface TripState {
   tab: Tab;
   /** max-width 760px: the panel is a bottom sheet. */
   phone: boolean;
-  sheetOpen: boolean;
-  /** The day shown alone on the map and open in the Plan tab; starts at the plan's first day. */
+  /** Phone sheet detent. */
+  sheet: SheetDetent;
+  /** The detent the handle reopens the collapsed sheet at: the last one the sheet rested at. */
+  sheetReopen: OpenDetent;
+  /** The day shown alone on the map and open in the Plan tab; starts at today's trip day, else the first day. */
   focusDay: number | null;
   /** The chosen basemap id; null until the user picks one (the map uses data.default_basemap). */
   basemap: string | null;
@@ -137,6 +142,8 @@ export interface TripState {
 export type TripStoreApi = StoreApi<TripState>;
 
 /** The day the map focuses: the open Plan tab day, none while the Places tab shows (focusDay itself stays). */
+export const selectSheetOpen = (s: TripState): boolean => s.sheet !== "peek";
+
 export const selectMapFocusDay = (s: TripState): number | null => (s.tab === "plan" ? s.focusDay : null);
 
 export interface Persistence {
@@ -156,6 +163,8 @@ export interface TripStoreInit {
   langs: readonly string[];
   defaultLang: string;
   plan: Plan;
+  /** The Plan day open at first when the plan has it (today's on a dated trip); else the first day. */
+  openDay?: number | null;
   phone: boolean;
   online?: boolean;
   persistence?: Persistence | null;
@@ -193,7 +202,9 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
   let overlayChoices: Partial<Record<OverlayKey, boolean>> = { ...prefs?.overlays };
 
   const store = createStore<TripState>()((set, get) => {
-    const closeSheetOnPhone = (): Partial<TripState> => (get().phone ? { sheetOpen: false } : {});
+    const sheetAt = (sheet: SheetDetent): Partial<TripState> =>
+      sheet === "peek" ? { sheet } : { sheet, sheetReopen: sheet };
+    const sheetOnPhone = (sheet: SheetDetent): Partial<TripState> => (get().phone ? sheetAt(sheet) : {});
     const mapIntent = (request: MapIntentRequest): MapIntent => ({ ...request, seq: ++intentSeq });
     const focusDay = (day: number | null, options?: FocusDayOptions): void =>
       set((s) => ({
@@ -201,7 +212,7 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
         overlays: day != null && !s.overlays.routes ? { ...s.overlays, routes: true } : s.overlays,
         ...(day != null
           ? {
-              ...(options?.collapseSheet === false ? {} : closeSheetOnPhone()),
+              ...sheetOnPhone(options?.sheet ?? "peek"),
               mapIntent: mapIntent({ type: "fitDay", day }),
             }
           : s.focusDay != null
@@ -224,9 +235,9 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
         if (init.langs.includes(next)) set({ lang: next });
       },
       setTab: (tab) => set({ tab, hovered: null }),
-      setPhone: (phone) => set({ phone, sheetOpen: false }),
-      setSheetOpen: (open) => set({ sheetOpen: open }),
-      toggleSheet: () => set((s) => ({ sheetOpen: !s.sheetOpen })),
+      setPhone: (phone) => set({ phone, sheet: "peek" }),
+      setSheet: (sheet) => set(sheetAt(sheet)),
+      toggleSheet: () => set((s) => sheetAt(s.sheet === "peek" ? s.sheetReopen : "peek")),
       setFocusDay: focusDay,
       toggleFocusDay: (day, options) => focusDay(get().focusDay === day ? null : day, options),
       setBasemap: (id) => set({ basemap: id }),
@@ -261,7 +272,7 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
       openCard: (id, options) =>
         set({
           selected: id,
-          ...closeSheetOnPhone(),
+          ...sheetOnPhone("peek"),
           ...(options?.fly === false ? {} : { mapIntent: mapIntent({ type: "fly", id }) }),
         }),
       closeCard: () => set({ selected: null }),
@@ -295,8 +306,9 @@ export function createTripStore(init: TripStoreInit): TripStoreApi {
       lang,
       tab: "plan",
       phone: init.phone,
-      sheetOpen: false,
-      focusDay: init.plan.days[0]?.day ?? null,
+      sheet: "peek",
+      sheetReopen: "half",
+      focusDay: init.plan.days.find((d) => d.day === init.openDay)?.day ?? init.plan.days[0]?.day ?? null,
       basemap: prefs?.basemap ?? null,
       activeBasemap: null,
       overlays: {

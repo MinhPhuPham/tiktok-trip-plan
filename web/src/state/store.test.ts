@@ -1,7 +1,7 @@
 import { makeDay, makeStop, makeTrip } from "../test/fixtures";
 import { planFromData } from "../data/types";
 import { prefsKey, tripKey, tripStorageId, watchTrip } from "./persist";
-import { createTripStore, selectMapFocusDay, type TripStoreInit } from "./store";
+import { createTripStore, selectMapFocusDay, selectSheetOpen, type TripStoreInit } from "./store";
 
 const trip = makeTrip();
 const init = (patch: Partial<TripStoreInit> = {}): TripStoreInit => ({
@@ -65,17 +65,45 @@ describe("trip store", () => {
     const store = createTripStore(init({ phone: true, persistence: null }));
     const { actions } = store.getState();
     actions.setOverlay("routes", false);
-    actions.setSheetOpen(true);
+    actions.setSheet("full");
     actions.toggleFocusDay(1);
     expect(store.getState().focusDay).toBeNull();
     actions.toggleFocusDay(1);
-    expect(store.getState()).toMatchObject({ focusDay: 1, sheetOpen: false });
+    expect(store.getState()).toMatchObject({ focusDay: 1, sheet: "peek" });
     expect(store.getState().overlays.routes).toBe(true);
     expect(store.getState().mapIntent).toMatchObject({ type: "fitDay", day: 1 });
-    actions.setSheetOpen(true);
+    actions.setSheet("full");
     actions.setFocusDay(null);
-    actions.setFocusDay(1, { collapseSheet: false });
-    expect(store.getState()).toMatchObject({ focusDay: 1, sheetOpen: true });
+    expect(store.getState().sheet).toBe("full");
+    actions.setFocusDay(1, { sheet: "half" });
+    expect(store.getState()).toMatchObject({ focusDay: 1, sheet: "half" });
+  });
+
+  it("keeps the sheet detent: the handle reopens at the last open detent, a card or a new viewport collapses it", () => {
+    const store = createTripStore(init({ phone: true, persistence: null }));
+    const { actions } = store.getState();
+    expect(store.getState()).toMatchObject({ sheet: "peek", sheetReopen: "half" });
+    expect(selectSheetOpen(store.getState())).toBe(false);
+    actions.toggleSheet();
+    expect(store.getState().sheet).toBe("half");
+    actions.setSheet("full");
+    actions.toggleSheet();
+    expect(store.getState()).toMatchObject({ sheet: "peek", sheetReopen: "full" });
+    actions.toggleSheet();
+    expect(store.getState().sheet).toBe("full");
+    expect(selectSheetOpen(store.getState())).toBe(true);
+    actions.openCard("a");
+    expect(store.getState().sheet).toBe("peek");
+    actions.setSheet("half");
+    actions.setPhone(false);
+    expect(store.getState().sheet).toBe("peek");
+  });
+
+  it("leaves the sheet alone on desktop", () => {
+    const store = createTripStore(init({ phone: false, persistence: null }));
+    store.getState().actions.setFocusDay(1, { sheet: "half" });
+    store.getState().actions.openCard("a");
+    expect(store.getState().sheet).toBe("peek");
   });
 
   it("starts with nothing focused without a plan and remembers the day the editor opened at", () => {

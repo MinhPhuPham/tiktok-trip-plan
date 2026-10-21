@@ -4,14 +4,17 @@ import type { TripModel } from "../data/model";
 import { useTripModel } from "../data/hooks";
 import { useTripStoreApi } from "../state/hooks";
 import type { TripStoreApi } from "../state/store";
+import { createFingerReach } from "./fingerReach";
 import L from "./leaflet";
-import { FALLBACK_VIEW, MAX_ZOOM, MIN_ZOOM, type MapHandle } from "./mapCore";
+import { FALLBACK_VIEW, MAX_ZOOM, MIN_ZOOM, STOP_CHIP_PANE, type MapHandle } from "./mapCore";
 
-const PANES: readonly [name: string, zIndex: number][] = [
-  ["labels", 300],
-  ["compass", 350],
-  ["routes", 420],
-  ["nearby", 590],
+/** Click-through panes let taps reach the pin under a label or a stop chip. */
+const PANES: readonly [name: string, zIndex: number, clickThrough: boolean][] = [
+  ["labels", 300, true],
+  ["compass", 350, false],
+  ["routes", 420, false],
+  ["nearby", 590, false],
+  [STOP_CHIP_PANE, 620, true],
 ];
 
 /** Every place not hidden, plus the center (the fit button and the first view). */
@@ -47,14 +50,17 @@ function createMap(element: HTMLElement): MapHandle {
   });
   L.control.zoom({ position: "bottomright" }).addTo(map);
   L.control.scale({ position: "bottomleft", imperial: false }).addTo(map);
-  for (const [name, zIndex] of PANES) map.createPane(name).style.zIndex = String(zIndex);
-  const labels = map.getPane("labels");
-  if (labels) labels.style.pointerEvents = "none";
+  for (const [name, zIndex, clickThrough] of PANES) {
+    const pane = map.createPane(name);
+    pane.style.zIndex = String(zIndex);
+    if (clickThrough) pane.style.pointerEvents = "none";
+  }
   const attribution = element.querySelector<HTMLElement>(".leaflet-control-attribution");
   if (attribution) attribution.tabIndex = 0;
   const renderer = canvasWorks() ? L.canvas : L.svg;
   return {
     map,
+    reach: createFingerReach(map),
     renderers: {
       compass: renderer({ pane: "compass", padding: 0.5 }),
       routes: renderer({ pane: "routes", padding: 0.5, tolerance: 6 }),

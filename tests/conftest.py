@@ -38,10 +38,14 @@ def ctx(project: Paths) -> Context:
 
 
 SINGLE_PAGE = (
-    "<!doctype html><title>__TRIP_TITLE__</title>"
-    '<script id="trip-data" type="application/json">__TRIP_DATA__</script>'
+    '<!doctype html><html lang="vi"><head><title>__TRIP_TITLE__</title>\n<!--__SEO_HEAD__-->'
+    '</head><body><script id="trip-data" type="application/json">__TRIP_DATA__</script>'
+    "</body></html>"
 )
-MANIFEST = '{"name": "__TRIP_NAME__", "short_name": "__TRIP_SHORT_NAME__", "start_url": "./"}'
+MANIFEST = (
+    '{"name": "__TRIP_NAME__", "short_name": "__TRIP_SHORT_NAME__", '
+    '"description": "__TRIP_DESCRIPTION__", "start_url": "./"}'
+)
 
 
 @pytest.fixture(autouse=True)

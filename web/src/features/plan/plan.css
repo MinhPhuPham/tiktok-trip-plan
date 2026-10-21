@@ -56,6 +56,12 @@
 .stop.muted .stop-name { font-weight: 500; color: var(--text-2); font-size: var(--fs-3); }
 .stop.is-hidden .stop-name { color: var(--text-3); text-decoration: line-through; text-decoration-thickness: 1px; }
 .stop-reason { display: -webkit-box; margin-top: 3px; color: var(--text-2); font-size: var(--fs-3); -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Plan check flag: appears once the checks chunk loads, at the line's end so nothing below moves. */
+.stop-flag { display: inline-grid; place-items: center; align-self: center; margin-left: auto; padding-left: 4px; color: var(--warn-text); animation: stop-flag-in var(--dur-2) ease-out; }
+.stop-flag .icon { width: 14px; height: 14px; }
+.stop-flag.is-error { color: var(--err-text); }
+@keyframes stop-flag-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .stop-flag { animation: none; } }
 .unplaced { border-bottom: 1px solid var(--line); }
 .unplaced summary {
   list-style: none; display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 20px; cursor: pointer;
@@ -72,23 +78,52 @@
 }
 @media (max-width: 760px) {
   .sheet-peek > .peek {
-    display: grid; grid-template-columns: 24px 1fr; gap: 12px; align-items: center; flex: none; width: 100%; min-height: 60px;
-    padding: 8px 16px 12px; border: 0; background: none; text-align: left;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; flex: none; width: 100%;
+    padding: 0 12px 8px 4px; touch-action: none;
+  }
+  .peek-main {
+    display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; align-items: center; min-width: 0; min-height: 60px;
+    padding: 6px 4px 6px 12px; border: 0; border-radius: var(--radius-m); background: none; color: var(--text); font: inherit; text-align: left;
   }
   .peek-dot {
     display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
     background: var(--d); color: var(--dink, #fff); font-size: var(--fs-4); font-weight: 700;
   }
-  .peek-text { display: grid; min-width: 0; }
-  .peek-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-2); line-height: 1.3; }
-  .peek-line b { font-weight: 650; color: var(--text-2); }
-  .peek-line .num { font-weight: 650; }
-  .peek-name { font-weight: 600; }
-  .peek-sub { color: var(--text-2); font-size: var(--fs-4); }
+  .peek-text { display: grid; gap: 1px; min-width: 0; }
+  .peek-text[data-step="next"] { animation: peek-from-end var(--dur-2) var(--ease-out); }
+  .peek-text[data-step="prev"] { animation: peek-from-start var(--dur-2) var(--ease-out); }
+  .peek-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font-size: var(--fs-4); line-height: 1.35; }
+  .peek-meta b { font-weight: 650; color: var(--text); }
+  .peek-name {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+    font-size: var(--fs-2); font-weight: 600; line-height: 1.25; overflow-wrap: anywhere;
+  }
+  .peek-steps { display: flex; flex: none; border-radius: var(--radius-pill); background: var(--surface-2); }
+  .peek-step {
+    display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: var(--radius-pill);
+    background: none; color: var(--text); transition: background-color var(--dur-1) ease-out, color var(--dur-1) ease-out;
+  }
+  .peek-step .icon { width: 20px; height: 20px; }
+  .peek-step:active:not([aria-disabled]) { background: var(--surface-3); }
+  .peek-step[aria-disabled] { color: var(--text-3); opacity: 0.45; cursor: default; }
+  .peek-main:active { background: var(--surface-2); }
   .stops, .panel-body .place-list { padding-left: 4px; padding-right: 4px; }
   .day-head { padding: 4px; }
   .day-toggle { padding-left: 17px; }
   .day-actions { padding-left: 18px; }
+}
+/* Narrow phones: the name may wrap to two lines; the row keeps that height so the map never jumps while stepping. */
+@media (max-width: 480px) {
+  .peek-main { min-height: 72px; }
+}
+@media (hover: hover) and (pointer: fine) and (max-width: 760px) {
+  .peek-step:hover:not([aria-disabled]) { background: var(--surface-3); }
+  .peek-main:hover { background: var(--surface-2); }
+}
+@keyframes peek-from-end { from { opacity: 0; transform: translateX(10px); } }
+@keyframes peek-from-start { from { opacity: 0; transform: translateX(-10px); } }
+@media (prefers-reduced-motion: reduce) {
+  .peek-text[data-step] { animation: none; }
 }
 @media (prefers-color-scheme: dark) {
   .dot { box-shadow: 0 0 0 2px var(--casing), 0 0 0 4px var(--surface); }

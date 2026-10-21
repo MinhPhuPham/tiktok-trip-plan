@@ -55,7 +55,7 @@ describe("editor session", () => {
     ]);
     expect(session.planJson().days[0]?.stops.map((s) => s.ref)).toEqual(["n1", "a"]);
     expect(session.store.getState().focus?.key).toBe(`main:${uidOf("n1")}`);
-    expect(session.isDirty()).toBe(true);
+    expect(session.isDirty()).toBe(false);
   });
 
   it("removes with an undo toast; undoing restores the generated plan", () => {
@@ -113,10 +113,9 @@ describe("editor session", () => {
     expect(session.store.getState().days.map((d) => d.stops.map((s) => s.ref))).toEqual([["n1"], ["a"]]);
   });
 
-  it("saves a versioned draft that a new session applies, and marks an outdated one stale", async () => {
+  it("autosaves every edit as a versioned draft that a new session applies, and marks an outdated one stale", async () => {
     const { model, trip, session, uidOf } = setup();
     session.actions.moveBy(uidOf("n1"), -1);
-    session.actions.save();
     expect(session.isDirty()).toBe(false);
     const stored = JSON.parse(localStorage.getItem(draftKey(model.data.city)) ?? "null") as { v: number };
     expect(stored.v).toBe(2);
@@ -133,19 +132,25 @@ describe("editor session", () => {
     expect(hasCurrentDraft(id, draftBasis(changed.data))).toBe(false);
     const stale = createEditorSession(changed, trip);
     expect(stale.store.getState().staleDraft).not.toBeNull();
+    stale.actions.addDay();
+    expect(JSON.parse(localStorage.getItem(draftKey(model.data.city)) ?? "null")).toEqual(stored);
     stale.actions.restoreDraft();
     expect(stale.store.getState().days[0]?.stops.map((s) => s.ref)).toEqual(["n1", "a"]);
+    expect(hasCurrentDraft(id, draftBasis(changed.data))).toBe(true);
+  });
+
+  it("clears the draft when the edits return to the generated plan", () => {
+    const { model, session, uidOf } = setup();
+    session.actions.moveBy(uidOf("n1"), -1);
+    expect(localStorage.getItem(draftKey(model.data.city))).not.toBeNull();
+    session.actions.moveBy(uidOf("n1"), 1);
+    expect(localStorage.getItem(draftKey(model.data.city))).toBeNull();
+    expect(session.isDirty()).toBe(false);
   });
 
   it("reads the old app's draft key", () => {
     const { model, trip } = setup();
-    const base = createEditorSession(model, trip);
-    const basis = (() => {
-      base.actions.save();
-      const saved = JSON.parse(localStorage.getItem(draftKey(model.data.city)) ?? "{}") as { basis: string };
-      localStorage.clear();
-      return saved.basis;
-    })();
+    const basis = draftBasis(model.data);
     localStorage.setItem(
       `trip-plan-draft:${model.data.city}`,
       JSON.stringify({ v: 1, basis, days: [{ stops: [{ ref: "n1", slot: null }] }], reasons: { a: "skip it" } }),

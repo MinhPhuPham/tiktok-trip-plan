@@ -1,7 +1,7 @@
 import { useRef, type KeyboardEvent } from "react";
 import { useTripModel, useTripPlan } from "../data/hooks";
 import { useT } from "../i18n/useT";
-import { useTab, useTripActions, useTripStoreApi } from "../state/hooks";
+import { useTab, useTripActions } from "../state/hooks";
 import type { Tab } from "../state/store";
 import { DOM_IDS } from "./ids";
 
@@ -13,8 +13,7 @@ const TABS: readonly { tab: Tab; id: string; panel: string; label: string }[] = 
 export function PanelTabs() {
   const t = useT();
   const tab = useTab();
-  const store = useTripStoreApi();
-  const { setTab, setSheetOpen } = useTripActions();
+  const { setTab } = useTripActions();
   const { places } = useTripModel();
   const plan = useTripPlan();
   const list = useRef<HTMLDivElement>(null);
@@ -52,10 +51,7 @@ export function PanelTabs() {
             aria-controls={item.panel}
             aria-selected={selected}
             tabIndex={selected ? 0 : -1}
-            onClick={() => {
-              select(item.tab, false);
-              if (store.getState().phone) setSheetOpen(true);
-            }}
+            onClick={() => select(item.tab, false)}
           >
             <span>{t.t(item.label)}</span>
             <span className="count num">{counts[item.tab]}</span>

@@ -7,10 +7,12 @@ import { basemapIds, fallbackBasemap, nextWorkingBasemap, resolveBasemap } from 
 import { clusterMix, clusterSize } from "./clusterMix";
 import { compassShapes } from "./compass";
 import { clusterHtml, escapeHtml, pinHtml } from "./markup";
-import { createRoadLookup, dayLine, decodePolyline, legKey } from "./polyline";
+import { createRoadLookup, daySegments, decodePolyline, encodePolyline, legKey } from "./polyline";
 import { fillTileUrl, preloadTileUrls, tileAt, vectorTileUrls } from "./tiles";
 import L from "./leafletGlobal";
 import { drawnHover } from "./mapCore";
+import { stopChipAnchor, stopMarkerSize } from "./stopChip";
+import { NEARBY_DOT_SIZE } from "./useNearbyLayer";
 
 describe("decodePolyline", () => {
   it("decodes Google's reference example", () => {
@@ -28,6 +30,12 @@ describe("decodePolyline", () => {
   it("honours another precision", () => {
     expect(decodePolyline("_ibE_ibE", 6)).toEqual([[0.1, 0.1]]);
   });
+
+  it("is the inverse of encodePolyline", () => {
+    expect(encodePolyline([[38.5, -120.2], [40.7, -120.95], [43.252, -126.453]])).toBe("_p~iF~ps|U_ulLnnqC_mqNvxq`@");
+    const points: [number, number][] = [[11.93834, 108.45912], [11.93839, 108.45917], [-0.00001, 0]];
+    expect(decodePolyline(encodePolyline(points))).toEqual(points);
+  });
 });
 
 describe("road legs", () => {
@@ -42,19 +50,52 @@ describe("road legs", () => {
     expect(legKey(stops[1]!, stops[2]!)).toBe("a>center");
   });
 
-  it("joins stops along the road and straight where a leg has none", () => {
+  it("joins stops along the road and splits off a straight segment where a leg has none", () => {
     const road = createRoadLookup({ "center>a": "_p~iF~ps|U" });
-    expect(dayLine(stops, road)).toEqual([
-      [0, 0],
-      [38.5, -120.2],
-      [1, 1],
-      [0, 0],
-    ]);
+    expect(daySegments(stops, road)).toEqual({
+      solid: [
+        [
+          [0, 0],
+          [38.5, -120.2],
+          [1, 1],
+        ],
+      ],
+      approximate: [
+        [
+          [1, 1],
+          [0, 0],
+        ],
+      ],
+    });
+  });
+
+  it("restarts the road run after a straight segment", () => {
+    const day = [...stops, { kind: "place", ref: "b", lat: 2, lng: 2 }];
+    const road = createRoadLookup({ "center>b": "_p~iF~ps|U" });
+    expect(daySegments(day, road)).toEqual({
+      solid: [
+        [
+          [0, 0],
+          [38.5, -120.2],
+          [2, 2],
+        ],
+      ],
+      approximate: [
+        [
+          [0, 0],
+          [1, 1],
+        ],
+        [
+          [1, 1],
+          [0, 0],
+        ],
+      ],
+    });
   });
 
   it("ignores inherited keys", () => {
     const road = createRoadLookup({});
-    expect(road({ kind: "place", ref: "__proto__" }, { kind: "place", ref: "x" })).toEqual([]);
+    expect(road({ kind: "place", ref: "__proto__", lat: 0, lng: 0 }, { kind: "place", ref: "x", lat: 1, lng: 1 })).toBeNull();
   });
 });
 
@@ -256,5 +297,31 @@ describe("drawnHover", () => {
     expect(drawnHover(model, trip.getState())).toBeNull();
     actions.setHovered("b");
     expect(drawnHover(model, trip.getState())).toBe("b");
+  });
+});
+
+describe("stop chips", () => {
+  const model = buildTripModel(makeTrip());
+  const stop = (ref: string | null) => ({ kind: "place", ref, lat: 0, lng: 0, number: 1 });
+
+  it("sizes each stop by the marker it sits on", () => {
+    expect(stopMarkerSize(model, stop("a"))).toBe(34);
+    expect(stopMarkerSize(model, stop("b"))).toBe(30);
+    expect(stopMarkerSize(model, stop("c"))).toBe(20);
+    expect(stopMarkerSize(model, stop("n1"))).toBe(NEARBY_DOT_SIZE);
+    expect(stopMarkerSize(model, stop(null))).toBe(20);
+  });
+
+  it("sits at the marker's top-right with its rim just over the marker's edge, clear of the glyph", () => {
+    for (const size of [NEARBY_DOT_SIZE, 20, 25, 30, 34]) {
+      const [x, y] = stopChipAnchor(size);
+      const centre = Math.hypot(10 - x, 10 - y);
+      expect(10 - x).toBeGreaterThan(0);
+      expect(y - 10).toBeGreaterThan(0);
+      const rimToMarkerCentre = centre - 10;
+      expect(rimToMarkerCentre).toBeLessThan(size / 2);
+      expect(rimToMarkerCentre).toBeGreaterThan(size / 2 - 3);
+      expect(rimToMarkerCentre).toBeGreaterThan((size * 0.58 * 1.18) / 2);
+    }
   });
 });

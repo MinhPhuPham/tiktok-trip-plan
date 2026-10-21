@@ -4,6 +4,7 @@ import { useNow } from "../../app/useNow";
 import { useToggleHidden } from "../../app/useToggleHidden";
 import { useTripModel, useTripPlan } from "../../data/hooks";
 import type { Target } from "../../data/model";
+import { useTargetNotes, type PlanNote } from "../../data/planIssues";
 import { useT } from "../../i18n/useT";
 import { useIsHidden, useSelectedId, useTripActions, useTripStoreApi } from "../../state/hooks";
 import type { TripStoreApi } from "../../state/store";
@@ -58,13 +59,14 @@ function OpenCard({ target, onClose }: OpenCardProps) {
 function CardBody({ target }: { target: Target }) {
   const model = useTripModel();
   const t = useT();
+  const notes = useTargetNotes(target.id);
   const travelmode = model.data.config.travelmode;
-  if (target.type === "place") return <PlaceBody target={target} />;
-  if (target.type === "nearby") return <NearbyDetails t={t} travelmode={travelmode} spot={target.item} />;
-  return <CenterDetails t={t} travelmode={travelmode} center={target.item} />;
+  if (target.type === "place") return <PlaceBody target={target} notes={notes} />;
+  if (target.type === "nearby") return <NearbyDetails t={t} travelmode={travelmode} spot={target.item} notes={notes} />;
+  return <CenterDetails t={t} travelmode={travelmode} center={target.item} notes={notes} />;
 }
 
-function PlaceBody({ target }: { target: Extract<Target, { type: "place" }> }) {
+function PlaceBody({ target, notes }: { target: Extract<Target, { type: "place" }>; notes: readonly PlanNote[] }) {
   const model = useTripModel();
   const plan = useTripPlan();
   const t = useT();
@@ -78,6 +80,7 @@ function PlaceBody({ target }: { target: Extract<Target, { type: "place" }> }) {
       plan={plan}
       t={t}
       place={target.item}
+      notes={notes}
       hidden={hidden}
       now={now}
       photosExpanded={photosOpen.has(target.id)}

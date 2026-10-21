@@ -1,0 +1,9 @@
+.install-note, .install-pop .install-note { margin: 10px 0 0; color: var(--text-2); text-wrap: pretty; }
+.install-copy { display: grid; justify-items: start; gap: 8px; margin-top: 10px; }
+.install-url {
+  width: 100%; min-height: var(--tap); padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-s);
+  background: var(--surface-2); color: var(--text); font: inherit; font-size: var(--fs-4);
+}
+.install-help { width: 100%; }
+.install-help > p:first-of-type { margin-top: 0; }
+.install-pop { max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }

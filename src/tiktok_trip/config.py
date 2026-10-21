@@ -336,6 +336,18 @@ class ExportConfig(BaseModel):
     """Download Google Maps place photos into output/media (paid skus place_details_essentials
     and place_photos, both capped under `quota`). Needs GOOGLE_MAPS_KEY."""
     max_photos_per_place: int = Field(default=1, ge=0)
+    site_url: str = ""
+    """Public address of the deployed output/app (e.g. https://trip.example.app). Link previews
+    (Zalo, Messenger, Facebook, X, Slack) need it for og:url, the canonical link and an absolute
+    og:image; empty leaves those out."""
+
+    @field_validator("site_url")
+    @classmethod
+    def _site_url(cls, value: str) -> str:
+        url = value.strip().rstrip("/")
+        if url and not url.startswith(("https://", "http://")):
+            raise ValueError("export.site_url must start with https:// (or http://)")
+        return url
 
 
 DEFAULT_ROAD_PROFILES: dict[TravelMode, str] = {
@@ -346,7 +358,8 @@ DEFAULT_ROAD_PROFILES: dict[TravelMode, str] = {
 
 
 class RoadsConfig(BaseModel):
-    """Road geometry of the map's day routes from an OSRM server, fetched by the export step.
+    """Road geometry of the map's day routes from an OSRM server, fetched by the export step
+    (and by the web app for legs of plans edited in the browser).
 
     `profiles` is the path segment before `/route/v1/` per travel mode (the FOSSGIS server at
     routing.openstreetmap.de serves routed-car, routed-bike and routed-foot); modes left out of

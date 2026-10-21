@@ -1,16 +1,20 @@
 import { useSyncExternalStore } from "react";
+import { browserInfo, installKind, type InstallHelp } from "./installOffer";
+
+type InstallOutcome = "accepted" | "dismissed";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+  userChoice: Promise<{ outcome: InstallOutcome }>;
 }
 
 export type InstallState =
   | { kind: "unavailable" }
-  | { kind: "prompt"; install: () => Promise<void> }
-  | { kind: "ios-hint" };
+  | { kind: "prompt"; install: () => Promise<InstallOutcome> }
+  | { kind: InstallHelp; ios: boolean };
 
 const listeners = new Set<() => void>();
+const installedListeners = new Set<() => void>();
 let deferred: BeforeInstallPromptEvent | null = null;
 let installed = false;
 let state: InstallState = { kind: "unavailable" };
@@ -19,24 +23,23 @@ const standalone = (): boolean =>
   window.matchMedia("(display-mode: standalone)").matches ||
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
-const isIos = (): boolean =>
-  /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
 function compute(): InstallState {
-  if (!__PWA__ || installed || standalone()) return { kind: "unavailable" };
-  if (deferred) {
-    const event = deferred;
-    return {
-      kind: "prompt",
-      install: async () => {
-        deferred = null;
-        await event.prompt();
-        await event.userChoice.catch(() => undefined);
-        update();
-      },
-    };
-  }
-  return isIos() ? { kind: "ios-hint" } : { kind: "unavailable" };
+  const touchMac = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  const { help, ios } = browserInfo(navigator.userAgent, touchMac);
+  const kind = installKind({ pwa: __PWA__, installed, standalone: standalone(), canPrompt: deferred != null, help });
+  const event = deferred;
+  if (kind === "unavailable") return { kind };
+  if (kind !== "prompt" || !event) return { kind: help, ios };
+  return {
+    kind,
+    install: async () => {
+      deferred = null;
+      await event.prompt();
+      const choice = await event.userChoice.catch(() => ({ outcome: "dismissed" as const }));
+      update();
+      return choice.outcome;
+    },
+  };
 }
 
 function update(): void {
@@ -54,6 +57,7 @@ if (__PWA__ && typeof window !== "undefined") {
     installed = true;
     deferred = null;
     update();
+    for (const listener of installedListeners) listener();
   });
   state = compute();
 }
@@ -63,7 +67,13 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
-/** Whether to offer an install button (beforeinstallprompt fired) or the iOS share-sheet hint. */
+/** Calls `listener` when the browser reports the app installed (`appinstalled`). */
+export function onAppInstalled(listener: () => void): () => void {
+  installedListeners.add(listener);
+  return () => installedListeners.delete(listener);
+}
+
+/** The browser's own install prompt when it fired, else how this browser installs (or cannot). */
 export function useInstallState(): InstallState {
   return useSyncExternalStore(subscribe, () => state, () => state);
 }

@@ -1,6 +1,7 @@
 import type { DragEvent } from "react";
 import { REST_REF } from "../../../data/types";
 import { cssVars } from "../../../lib/css";
+import { ON_LEG } from "../logic/constants";
 import { weekdayOf } from "../logic/context";
 import type { IssueGroups } from "../logic/issues";
 import { WEEKDAYS } from "../logic/labels";
@@ -70,6 +71,8 @@ export function DayCard({ day, dayIndex, dayCount, timed, groups, drop, dragging
   const numbers: number[] = [];
   for (const stop of day.stops) numbers.push((numbers.at(-1) ?? 0) + (stop.ref === REST_REF ? 0 : 1));
   const color = model.defaultDayColor(dayIndex + 1);
+  /** A long ride back already shows on the last leg. */
+  const dayIssues = (groups.byDay.get(dayIndex) ?? []).filter((x) => !ON_LEG.has(x.rule));
 
   return (
     <section
@@ -98,7 +101,7 @@ export function DayCard({ day, dayIndex, dayCount, timed, groups, drop, dragging
           <p className="pe-day-stats num">{t("day_stats", { places, travel, end: time(end.arrive_min) })}</p>
         ) : null}
       </header>
-      <IssueList issues={groups.byDay.get(dayIndex) ?? []} className="pe-day-issues" />
+      <IssueList issues={dayIssues} className="pe-day-issues" />
       {day.stops.length ? (
         <>
           {first ? <CenterRow label={t("leave_center", { name: center })} at={time(first.depart_min)} /> : null}

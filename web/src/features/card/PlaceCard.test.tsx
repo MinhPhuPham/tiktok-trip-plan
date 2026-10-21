@@ -2,7 +2,7 @@ import { act, fireEvent, screen, within } from "@testing-library/react";
 import { beforeAll, describe, expect, it } from "vitest";
 import { DOM_IDS } from "../../app/ids";
 import { createTranslator } from "../../i18n/translator";
-import { makePlace, makeTrip } from "../../test/fixtures";
+import { closingTrip, makePlace, makeTrip } from "../../test/fixtures";
 import { stubDialog } from "../../test/dialog";
 import { renderTrip } from "../../test/renderTrip";
 import { Toast } from "../../ui/Toast";
@@ -47,6 +47,36 @@ describe("PlaceCard", () => {
     expect(within(card).getByText("4.5 (100)")).toBeInTheDocument();
     expect(within(card).getByRole("link", { name: /open_maps/ })).toHaveAttribute("href", "https://maps.google.com/?cid=1");
     expect(within(card).getByRole("link", { name: /Directions/ }).getAttribute("href")).toContain("destination=10.770000,106.700000");
+  });
+
+  it("lists the plan notes for the place, problems first, in English and Vietnamese", async () => {
+    const data = closingTrip();
+    data.labels.vi!.ui.closing_warning = "Đến lúc {time}, không đủ thời gian trước giờ đóng cửa (cần {need} phút). Giờ mở cửa: {hours}";
+    data.labels.vi!.ui.missing_slot_warning = "Chưa chọn buổi";
+    const { open, store } = renderCard(data);
+    open("a");
+    const notes = await screen.findByRole("region", { name: "Plan notes" });
+    const items = within(notes).getAllByRole("listitem");
+    expect(items.map((li) => li.textContent)).toEqual([
+      expect.stringMatching(/^Problem: Arrives 8:0\d AM with no time left before closing \(needs 30 min\)\. Hours: 6:00 AM–8:10 AM$/),
+      "Note: No part of day set",
+    ]);
+    expect(items[0]).toHaveClass("is-error");
+    expect(items[1]).not.toHaveClass("is-error");
+    act(() => store.getState().actions.setLang("vi"));
+    const vi = screen.getByRole("region", { name: "Lưu ý lịch trình" });
+    expect(within(vi).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      expect.stringMatching(/^Vấn đề: Đến lúc 8:0\d, không đủ thời gian trước giờ đóng cửa \(cần 30 phút\)\. Giờ mở cửa: 6:00–8:10$/),
+      "Lưu ý: Chưa chọn buổi",
+    ]);
+  });
+
+  it("shows no plan notes for a place the checks find nothing on", async () => {
+    const { open } = renderCard(makeTrip({ days: [] }));
+    open("b");
+    await screen.findByRole("dialog");
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(screen.queryByRole("region", { name: "Plan notes" })).not.toBeInTheDocument();
   });
 
   it("returns focus to where it came from on close", () => {

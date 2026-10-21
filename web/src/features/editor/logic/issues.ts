@@ -1,4 +1,4 @@
-/** Issue wording, grouping by stop/day/left-out place, and the summary counts. */
+/** Issue wording, grouping by stop/day/left-out place, and the count of problems to fix. */
 import { hoursPeriods, openingIntervals } from "./clock";
 import { DAY_MINUTES } from "./constants";
 import type { EditorNode, Issue } from "./types";
@@ -127,25 +127,10 @@ export function groupIssues(days: readonly KeyedDay[], issues: readonly Issue[])
   return { byStop, byDay, byRef };
 }
 
-export interface IssueCounts {
-  errors: number;
-  warnings: number;
-}
+export const errorCount = (issues: readonly Issue[]): number => issues.filter((i) => i.level === "error").length;
 
-export function issueCounts(issues: readonly Issue[]): IssueCounts {
-  let errors = 0;
-  let warnings = 0;
-  for (const issue of issues) {
-    if (issue.level === "error") errors++;
-    else if (issue.rule !== "empty_day") warnings++;
-  }
-  return { errors, warnings };
-}
-
-/** "1 note" / "3 notes". */
-export const notesText = (t: IssueWords["t"], n: number): string => t(n === 1 ? "note_1" : "notes_n", { n });
-
-export function summaryText(t: IssueWords["t"], counts: IssueCounts): string {
-  const head = counts.errors ? t("to_fix", { n: counts.errors }) : t(counts.warnings ? "no_errors" : "all_good");
-  return counts.warnings ? `${head}, ${notesText(t, counts.warnings)}` : head;
+/** "2 to fix" / "Nothing to fix": warnings are never counted. */
+export function errorsText(t: IssueWords["t"], issues: readonly Issue[]): string {
+  const n = errorCount(issues);
+  return n ? t("to_fix", { n }) : t("no_errors");
 }

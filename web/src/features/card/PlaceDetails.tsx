@@ -2,6 +2,7 @@ import { useId, type ReactNode } from "react";
 import { DOM_IDS } from "../../app/ids";
 import type { TripModel } from "../../data/model";
 import { dayColorOf, directionsTo } from "../../data/plan";
+import type { PlanNote } from "../../data/planIssues";
 import type { MapPlace, TripPlan } from "../../data/types";
 import type { Translator } from "../../i18n/translator";
 import { cssVars } from "../../lib/css";
@@ -10,6 +11,7 @@ import { Button } from "../../ui/Button";
 import { ExternalLink } from "../../ui/ExternalLink";
 import { MediaGallery } from "./MediaGallery";
 import { openState } from "./openState";
+import { PlanNotes } from "./PlanNotes";
 
 const MAX_DISHES = 3;
 
@@ -32,6 +34,8 @@ interface PlaceDetailsProps {
   plan: TripPlan;
   t: Translator;
   place: MapPlace;
+  /** The plan checks for this place (data/planIssues). */
+  notes: readonly PlanNote[];
   hidden: boolean;
   now: Date;
   photosExpanded: boolean;
@@ -44,6 +48,7 @@ export function PlaceDetails({
   plan,
   t,
   place,
+  notes,
   hidden,
   now,
   photosExpanded,
@@ -79,6 +84,7 @@ export function PlaceDetails({
         {place.name}
       </h2>
       <p className="card-meta num">{meta}</p>
+      <PlanNotes t={t} notes={notes} />
       <dl>
         <Row label={t.t("hours")}>{hoursContent(t, place, now)}</Row>
         <Row label={t.labels.best_time}>{bestTimeContent(t, place)}</Row>

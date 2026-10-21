@@ -57,6 +57,7 @@ Edit `config.yaml`. The decisions that matter:
 | `quota` | Local call caps per SKU so a run never leaves the free tiers; see [Local quota guard](#local-quota-guard) |
 | `export.max_frames_per_place` | Video frames cited as evidence that export copies to `output/media` per place, default `4`, menu-looking frames first (the evidence quote has a price such as `45.000` or `30k`, or says menu / thực đơn / bảng giá). No API call |
 | `export.google_photos`, `export.max_photos_per_place` | `false` (default). `true` also downloads up to `max_photos_per_place` (default `1`) Google Maps photos per Google-matched place into `output/media`: one Place Details call with only the `photos` field (SKU `place_details_essentials`) and one Place Photos call per photo (SKU `place_photos`), both capped under `quota`; the image download itself is not billed. A photo already in `output/media` is never fetched again. Needs `GOOGLE_MAPS_KEY`; see [Preview images](#preview-images) for the attribution rule |
+| `export.site_url` | Public address of the deployed `output/app/`, e.g. `https://tiktok-trip-map-dun.vercel.app` (trailing slash optional). Link previews in Zalo, Messenger, Facebook, iMessage, Slack, Telegram and X need it: the export writes it into `index.html` as the canonical link, `og:url` and the absolute `og:image`. Empty (default) leaves those out and logs a warning; the preview card then lacks its image on most apps. See [Link previews](#link-previews) |
 | `media.whisper_model`, `media.whisper_compute_type` | faster-whisper model (default `large-v3`) and its CTranslate2 compute type (default `int8`: about half the memory of `float32` on CPU and 2-3x faster, with negligible accuracy loss; `float16` suits a GPU, `default` keeps the model's stored type) |
 | `extract.max_comments` | How many comments go into each extraction prompt. Every frame the media step kept (at most `media.max_frames`) is listed |
 
@@ -143,7 +144,8 @@ output/
   trips/en/trip.xlsx         Dashboard (compass + plan at a glance) and Plan-to-go (day summary + every stop)
   trips/vi/trip.xlsx         The same in Vietnamese, 24-hour clock: sheets Tổng Hợp and Lịch Trình
   map.html                   Single-page map app: plan and places side panel, filters, basemaps, EN/VI (see below)
-  app/                       The same app as an installable PWA (trip.json, media/, offline.json, service worker); deploy this folder
+  app/                       The same app as an installable PWA (trip.json, media/, offline.json, service worker,
+                             og-image.png + link-preview tags); deploy this folder
   mymaps/mymaps_<SECTOR>.csv One file per direction for Google My Maps (one layer each)
   media/<place>/              Preview images per place (JPEG, long side 640 px): frame-<video>-<NNN>.jpg, google-<n>.jpg
   media/index.json           {place_id: [{src, kind, caption, source_url, attributions}]} for the map and workbook
@@ -315,7 +317,7 @@ opening hours, and places with no tag fall back to a category window, so every p
     view (loaded after the first paint) and the Leaflet pins, routes and rings stay on top of it.
     Without it OpenFreeMap (vector tiles drawn with MapLibre GL, no key) is the default, then Esri
     Streets. A basemap whose tiles or style fail to load, OpenFreeMap without WebGL, or Google failing
-    to load, switches to the next one with a note. EN/VI switches the interface language (default from the browser); place data stays as
+    to load, switches to the next one with a note. EN/VI switches the interface language (Vietnamese on a first visit, whatever the browser language; the choice is remembered); place data stays as
     extracted. Choices are remembered in the browser. Light and dark follow the system setting
     (tiles are dimmed a little in dark mode).
 
@@ -351,13 +353,31 @@ npx gh-pages -d output/app                          # GitHub Pages (pushes to th
 
 One command does it all for Vercel (build if `web/` changed, export, safety checks, deploy):
 `scripts/deploy-vercel.sh` (`--preview` for a preview URL, `--dry-run` to check without uploading,
-`--skip-export` to publish `output/app` as it is).
+`--skip-export` to publish `output/app` as it is). It refuses to deploy when the server key is in
+`output/app`, when the upload would pass Vercel's 100 MB cap, or when the Vercel project is connected
+to Git (a Git build of this repo has no `output/`, so it would replace the site with a 404; the
+root `vercel.json` also turns Git deployments off). After a production deploy it checks the public URL
+serves the version just exported; if not, roll back with `cd output/app && npx vercel@62.5.0 rollback`.
 
 Vercel by hand: `npx vercel login` once, then `npx vercel deploy output/app --prod`. The first
 run asks to set up a project (accept the defaults: no build command, output directory `./`); later
 runs reuse it, because the export keeps `output/app/.vercel` (and `.netlify`) across rebuilds.
 `web/public/vercel.json` ships the cache headers (hashed `assets/` immutable, `sw.js`, `trip.json`
 and friends `no-cache`), so an update is picked up on the next visit.
+
+### Link previews
+
+The site is called **TwLP-Trips** (`SITE_NAME` in `src/tiktok_trip/export/site.py`): the browser
+tab, the home-screen name and the preview title. Link-preview crawlers run no JavaScript, so the export
+writes everything into the static `output/app/index.html`: a Vietnamese description
+(`<city>: lịch trình N ngày, M địa điểm từ review TikTok — …`), Open Graph and Twitter card tags, the
+canonical link and a JSON-LD `WebSite`. It also draws `output/app/og-image.png` (1200×630, the city
+and trip size on the app's dark theme, with a stylised route; offline, no map tiles) and writes
+`robots.txt` (allow all). `og:image` carries `?v=<content hash>`, so apps that cache previews fetch a
+changed card. Set `export.site_url` so these URLs are absolute. After deploying, paste the link into
+the Facebook Sharing Debugger (or the app itself) to check the card; apps cache a preview for days,
+the debugger's "Scrape again" refreshes Facebook's and Messenger's copy. Vercel preview deployments
+send `X-Robots-Tag: noindex` themselves; only production is indexable.
 
 The server key `GOOGLE_MAPS_KEY` is never written to `output/`; the export fails if it finds it there. With `export.google_map: true` your browser key `GOOGLE_MAPS_BROWSER_KEY` is inside `trip.json` and `map.html`:
 restrict it to your site's HTTP referrer (`https://<your-site>/*`) and the Maps JavaScript API before deploying, or leave the option off.

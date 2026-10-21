@@ -1,35 +1,46 @@
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { classes } from "../lib/css";
+import { stepDetent, type SheetDetent } from "../lib/sheetSnap";
+import { createSheetDrag, type SheetDrag } from "./sheetDrag";
 
 interface BottomSheetProps {
   /** Phone layout: a sheet at the bottom; otherwise a plain side panel. */
   phone: boolean;
-  open: boolean;
+  detent: SheetDetent;
+  /** A drag or an arrow key chose a detent. */
+  onDetentChange: (detent: SheetDetent) => void;
+  /** The handle's tap: collapse, or reopen at the last open detent. */
   onToggle: () => void;
-  /** Accessible name of the handle ("Show list" / "Hide list"). */
+  /** Accessible name of the handle ("Show list" / "Hide list, half height"). */
   toggleLabel: string;
+  /** Announced politely when the detent changes ("List at half height"). */
+  status: string;
   /** id of the body the handle controls. */
   bodyId: string;
   handleId?: string;
   id?: string;
   className?: string;
-  /** Always visible while collapsed (the "Next stop" row). */
+  /** Shown while collapsed (the "Next stop" row); fades out as the header fades in. */
   peek?: ReactNode;
-  /** Header and tabs: off screen and inert while collapsed. */
+  /** Header and tabs: inert while collapsed. */
   head: ReactNode;
   children: ReactNode;
 }
 
+const STEP_KEYS: Readonly<Record<string, -1 | 1>> = { ArrowUp: -1, ArrowDown: 1 };
+
 /**
- * Side panel on desktop, bottom sheet on phones. Collapsed, the sheet shows the handle and the
- * peek row; the rest is inert. Open, the peek row is hidden. The collapsed height is published as
- * --peek on <html> (the map area ends there), measured only while collapsed.
+ * Side panel on desktop, draggable bottom sheet on phones with three detents: peek (handle and
+ * peek row), half and full. Header and list are inert at the peek. The drag itself lives in
+ * sheetDrag.ts and never re-renders React.
  */
 export function BottomSheet({
   phone,
-  open,
+  detent,
+  onDetentChange,
   onToggle,
   toggleLabel,
+  status,
   bodyId,
   handleId,
   id,
@@ -38,26 +49,43 @@ export function BottomSheet({
   head,
   children,
 }: BottomSheetProps) {
+  const panel = useRef<HTMLElement>(null);
   const handle = useRef<HTMLButtonElement>(null);
   const peekBox = useRef<HTMLDivElement>(null);
   const headBox = useRef<HTMLDivElement>(null);
   const bodyBox = useRef<HTMLDivElement>(null);
-  const away = phone && !open;
+  const live = useRef<HTMLParagraphElement>(null);
+  const announced = useRef(detent);
+  const current = useRef(detent);
+  const release = useRef(onDetentChange);
+  const drag = useRef<SheetDrag | null>(null);
+  const away = phone && detent === "peek";
 
   useLayoutEffect(() => {
-    if (!away) return;
-    const measure = () => {
-      const peekRow = peekBox.current;
-      const edge = peekRow && peekRow.offsetHeight > 0 ? peekRow : headBox.current?.firstElementChild;
-      if (edge instanceof HTMLElement) {
-        document.documentElement.style.setProperty("--peek", `${edge.offsetTop + edge.offsetHeight}px`);
-      }
+    release.current = onDetentChange;
+  });
+
+  useLayoutEffect(() => {
+    current.current = detent;
+    drag.current?.show(detent);
+  }, [detent]);
+
+  useLayoutEffect(() => {
+    const [p, k, h, b] = [panel.current, peekBox.current, headBox.current, bodyBox.current];
+    if (!phone || !p || !k || !h || !b) return undefined;
+    const controller = createSheetDrag({ panel: p, peek: k, head: h, body: b }, (d) => release.current(d), current.current);
+    drag.current = controller;
+    return () => {
+      controller.dispose();
+      drag.current = null;
     };
-    measure();
-    const observer = new ResizeObserver(measure);
-    for (const node of [peekBox.current, headBox.current]) if (node) observer.observe(node);
-    return () => observer.disconnect();
-  }, [away]);
+  }, [phone]);
+
+  useEffect(() => {
+    if (!phone || announced.current === detent) return;
+    announced.current = detent;
+    if (live.current) live.current.textContent = status;
+  }, [phone, detent, status]);
 
   useEffect(() => {
     if (!away) return;
@@ -66,16 +94,25 @@ export function BottomSheet({
     if (lost) handle.current?.focus({ preventScroll: true });
   }, [away]);
 
+  const onHandleKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const step = STEP_KEYS[event.key];
+    if (!step || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    event.preventDefault();
+    const next = stepDetent(detent, step);
+    if (next !== detent) onDetentChange(next);
+  };
+
   return (
-    <aside id={id} className={classes("panel", open && "is-open", className)}>
+    <aside ref={panel} id={id} className={classes("panel", className)} data-sheet={phone ? detent : undefined}>
       <button
         ref={handle}
         id={handleId}
         className="sheet-handle"
         type="button"
-        aria-expanded={open}
+        aria-expanded={!away}
         aria-controls={bodyId}
         onClick={onToggle}
+        onKeyDown={phone ? onHandleKey : undefined}
       >
         <span aria-hidden="true" />
         <b className="sr-only">{toggleLabel}</b>
@@ -89,6 +126,7 @@ export function BottomSheet({
       <div ref={bodyBox} className="panel-body" id={bodyId} inert={away} aria-hidden={away || undefined}>
         {children}
       </div>
+      <p ref={live} className="sr-only" aria-live="polite" />
     </aside>
   );
 }

@@ -1,8 +1,8 @@
 {
   "name": "__TRIP_NAME__",
   "short_name": "__TRIP_SHORT_NAME__",
-  "description": "Trip plan and places map",
-  "lang": "en",
+  "description": "__TRIP_DESCRIPTION__",
+  "lang": "vi",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

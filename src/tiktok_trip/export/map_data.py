@@ -48,6 +48,7 @@ from tiktok_trip.export.palette import (
     readable_text_color,
     sector_color,
 )
+from tiktok_trip.export.site import SITE_NAME
 from tiktok_trip.geo import SECTOR_BEARING, destination_point
 from tiktok_trip.models import (
     BestTime,
@@ -138,6 +139,8 @@ TILE_HOSTS: tuple[str, ...] = (
     "server.arcgisonline.com",
     "tile.openstreetmap.org",
 )
+ROUTING_HOSTS: tuple[str, ...] = ("routing.openstreetmap.de",)
+"""OSRM hosts whose answers the service worker caches (web pwa/constants.ts mirrors both lists)."""
 RING_LABEL_BEARING = 22.5
 """Between the N and NE rays, so ring labels never sit under a direction label."""
 GOOGLE_MAPS_JS = "https://maps.googleapis.com/maps/api/js"
@@ -353,6 +356,8 @@ class MapExtras:
 
 class MapData(BaseModel):
     schema_version: int = MAP_SCHEMA_VERSION
+    site_name: str = SITE_NAME
+    """The app's document.title (the export also writes it into <title>)."""
     city: str
     summary: Localized
     generated: Localized
@@ -385,6 +390,11 @@ class MapData(BaseModel):
     roads: dict[str, str] = Field(default_factory=dict)
     """Road geometry per leg "<from>><to>" (MapTravel ids), encoded polyline of precision 5;
     the map draws legs without one as straight lines."""
+    roads_enabled: bool = False
+    """The app may ask the OSRM server below for legs `roads` lacks (stops moved in the editor)."""
+    roads_endpoint: str = ""
+    roads_profile: str = ""
+    """Path segment before `/route/v1/` for the trip's travel mode; empty means none."""
     media: dict[str, list[MediaItem]]
     preferences: MapPreferences
     trip_weekdays: list[int] = Field(serialization_alias="tripWeekdays")
@@ -705,6 +715,9 @@ def build_map_data(
         if extras.travel
         else None,
         roads=dict(extras.roads),
+        roads_enabled=data.config.roads.enabled,
+        roads_endpoint=data.config.roads.endpoint,
+        roads_profile=data.config.roads.profiles[data.config.travel.mode],
         media=map_media(extras.media, set(by_id)),
         preferences=MapPreferences(must_go=preferences.must_go, removed=preferences.removed),
         trip_weekdays=weekdays,

@@ -1,18 +1,20 @@
 import { DOM_IDS } from "../app/ids";
 import { useT } from "../i18n/useT";
+import { InstallTool } from "../pwa/InstallTool";
 import { useTripActions, useTripStore } from "../state/hooks";
 import type { TripState } from "../state/store";
 import { Icon } from "../ui/Icon";
 
 const selectLayersOpen = (s: TripState) => s.layersOpen;
 
-/** Fit-all and layers buttons at the map's top right. */
+/** Install (while the trip can be installed), fit-all and layers buttons at the map's top right. */
 export function MapTools() {
   const t = useT();
   const open = useTripStore(selectLayersOpen);
   const { requestMap, setLayersOpen } = useTripActions();
   return (
     <div className="map-tools">
+      <InstallTool />
       <button
         type="button"
         className="tool"

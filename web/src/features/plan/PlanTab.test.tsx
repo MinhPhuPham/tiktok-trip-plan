@@ -2,9 +2,8 @@ import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTranslator } from "../../i18n/translator";
 import { ROW_HOVER_DELAY_MS } from "../../state/useRowHover";
-import { makeDay, makeStop, makeTrip } from "../../test/fixtures";
+import { closingTrip, makeDay, makeStop, makeTrip } from "../../test/fixtures";
 import { renderTrip } from "../../test/renderTrip";
-import { PeekNext } from "./PeekNext";
 import { PlanTab } from "./PlanTab";
 import { unplacedReason } from "./unplaced";
 
@@ -55,14 +54,14 @@ describe("PlanTab", () => {
     expect(screen.getByRole("button", { name: /^Ngày 1 · 1 điểm dừng/ })).toBeInTheDocument();
   });
 
-  it("keeps one day open, focuses it on the map and keeps the phone sheet open", () => {
+  it("keeps one day open, focuses it on the map and lowers the phone sheet to half", () => {
     const { store } = renderTrip(<PlanTab />, { data: twoDays(), phone: true });
-    act(() => store.getState().actions.setSheetOpen(true));
+    act(() => store.getState().actions.setSheet("full"));
     const day1 = screen.getByRole("button", { name: /^Day 1 ·/ });
     const day2 = screen.getByRole("button", { name: /^Day 2 ·/ });
     expect(day2).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(day2);
-    expect(store.getState()).toMatchObject({ focusDay: 2, sheetOpen: true });
+    expect(store.getState()).toMatchObject({ focusDay: 2, sheet: "half" });
     expect(store.getState().mapIntent).toMatchObject({ type: "fitDay", day: 2 });
     expect(day1).toHaveAttribute("aria-expanded", "false");
     expect(day2).toHaveAttribute("aria-expanded", "true");
@@ -189,31 +188,23 @@ describe("PlanTab", () => {
     });
   });
 
+  it("flags stops with plan problems by an icon once the checks load, in the current language", async () => {
+    const data = closingTrip();
+    data.labels.vi!.ui.missing_slot_warning = "Chưa chọn buổi";
+    const { store } = renderTrip(<PlanTab />, { data });
+    const flag = await screen.findByRole("img", { name: /^1 problem, 1 note: Arrives 8:0\d AM with no time left before closing/ });
+    expect(screen.getByRole("button", { name: /Phở Gia Truyền/ })).toContainElement(flag);
+    expect(flag).toHaveClass("stop-flag", "is-error");
+    expect(screen.getByRole("button", { name: /Lookout/ })).toContainElement(screen.getByRole("img", { name: /^2 notes/ }));
+    expect(screen.queryByText(/no time left/)).not.toBeInTheDocument();
+    act(() => store.getState().actions.setLang("vi"));
+    expect(screen.getByRole("img", { name: /^1 vấn đề, 1 lưu ý: .*Chưa chọn buổi$/ })).toBeInTheDocument();
+  });
+
   it("marks hidden places in the timeline", () => {
     const { store } = renderTrip(<PlanTab />);
     act(() => store.getState().actions.setHidden("a", true));
     expect(screen.getByRole("button", { name: /Phở Gia Truyền/ }).closest("li")).toHaveClass("is-hidden");
-  });
-});
-
-describe("PeekNext", () => {
-  it("renders only on phones", () => {
-    renderTrip(<PeekNext />);
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
-  });
-
-  it("shows the next stop and opens it", () => {
-    const data = makeTrip({
-      days: [makeDay(1, [makeStop("start", null), makeStop("place", "a", { arrive: "00:00", depart: "23:59" }), makeStop("end", null)])],
-    });
-    data.labels.en!.ui.leg = "{n} min";
-    const { store } = renderTrip(<PeekNext />, { data, phone: true });
-    const peek = screen.getByRole("button");
-    expect(peek).toHaveTextContent("Next:");
-    expect(peek).toHaveTextContent("Phở Gia Truyền");
-    expect(peek).toHaveTextContent("Day 1 · #1 · 10 min");
-    fireEvent.click(peek);
-    expect(store.getState().selected).toBe("a");
   });
 });
 

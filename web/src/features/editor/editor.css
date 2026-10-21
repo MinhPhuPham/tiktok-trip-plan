@@ -11,7 +11,6 @@
   --pe-err-tint: oklch(50% 0.19 27 / 0.08);
   --pe-warn: oklch(50% 0.11 65);
   --pe-warn-line: oklch(72% 0.15 70);
-  --pe-ok: var(--ok-text);
   --pe-lead: 24px;
   --pe-dot: 20px;
   --pe-spine: calc(var(--pe-lead) + var(--pe-dot) / 2 - 1px);
@@ -61,7 +60,8 @@
   .pe-btn.ghost:hover:not(:disabled) { color: var(--text); background: var(--surface-2); }
   .pe-icon-btn:hover { background: var(--surface-2); color: var(--text); }
   .pe-icon-btn.is-remove:hover { color: var(--pe-err); background: var(--pe-err-tint); }
-  button.pe-checks:hover { background: var(--surface-2); }
+  .pe-fix:hover { background: color-mix(in oklab, var(--pe-err) 16%, transparent); }
+  .pe-flag:hover { background: var(--surface-3); }
   .pe-stop:hover > .pe-row { background: var(--surface-2); }
   .pe-stop:hover { --pe-ring: var(--surface-2); }
   .pe-stop:hover .pe-grip { opacity: 1; }
@@ -71,32 +71,23 @@
 }
 
 /* sticky bar */
+/* One row: title, the problems to fix (only while there are some), Done. Edits save themselves. */
 .pe-bar {
-  position: sticky; top: 0; z-index: 3; display: grid; gap: 6px; padding: 14px 16px 10px 20px;
+  position: sticky; top: 0; z-index: 3; display: grid; gap: 4px; padding: 10px 16px 10px 20px;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
 }
 .pe-bar-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .pe-title { margin: 0 auto 0 0; font-size: var(--fs-2); font-weight: 650; letter-spacing: -0.015em; }
-.pe-sub { justify-content: space-between; flex-wrap: wrap; row-gap: 2px; min-height: 36px; }
-.pe-status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-4); color: var(--text-3); }
-.pe-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--pe-ok); }
-.pe-status.is-dirty { color: var(--text-2); }
-.pe-status.is-dirty::before { background: var(--pe-warn-line); }
-.pe-status.is-error { color: var(--pe-err); }
-.pe-status.is-error::before { background: var(--pe-err); }
-.pe-summary { display: flex; align-items: center; gap: 4px; margin-right: -6px; }
-.pe-checks {
-  position: relative; display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 0 6px;
-  border: 0; border-radius: var(--radius-s); background: none; font-size: var(--fs-4); font-weight: 600; color: var(--text-2);
+.pe-fix {
+  position: relative; display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 10px;
+  border: 0; border-radius: var(--radius-pill); background: var(--pe-err-tint); color: var(--pe-err);
+  font-size: var(--fs-4); font-weight: 650; white-space: nowrap;
+  transition: background-color var(--dur-1) ease-out;
 }
-button.pe-checks::after { content: ""; position: absolute; inset: -4px 0; }
-.pe-checks .pe-ic { width: 14px; height: 14px; }
-.pe-checks.is-error { color: var(--pe-err); }
-.pe-checks.is-notes .pe-ic:first-child { color: var(--pe-warn); }
-.pe-checks.is-notes .pe-chev { transition: transform var(--dur-2) var(--ease-out); }
-.pe-checks.is-notes[aria-expanded="true"] .pe-chev { transform: rotate(180deg); }
-.pe-checks.is-ok { color: var(--pe-ok); }
+.pe-fix::after { content: ""; position: absolute; inset: -6px 0; }
+.pe-fix .pe-ic { width: 14px; height: 14px; }
+.pe-save-error { margin: 0; color: var(--pe-err); font-size: var(--fs-4); font-weight: 600; }
 .pe-hint { margin: 10px 20px 0; color: var(--text-3); font-size: var(--fs-4); }
 @media (pointer: coarse) { .pe-hint { display: none; } }
 .pe-banner {
@@ -135,8 +126,6 @@ button.pe-checks::after { content: ""; position: absolute; inset: -4px 0; }
 .pe-dot .pe-ic { width: 12px; height: 12px; }
 .pe-dot.is-center { border-radius: var(--radius-s); background: var(--surface); color: var(--text-2); border: 1.5px solid var(--line-strong); }
 .pe-stop.is-rest .pe-dot { background: var(--surface); color: var(--d); border: 2px solid var(--d); }
-.pe-stop.has-warn .pe-dot { box-shadow: 0 0 0 3px var(--pe-ring, var(--surface)), 0 0 0 5px var(--pe-warn-line); }
-.pe-stop.has-error .pe-dot { box-shadow: 0 0 0 3px var(--pe-ring, var(--surface)), 0 0 0 5px var(--pe-err); }
 
 .pe-leg {
   display: flex; align-items: center; gap: 8px; min-height: 22px;
@@ -176,7 +165,7 @@ button.pe-checks::after { content: ""; position: absolute; inset: -4px 0; }
 .pe-stop.is-rest .pe-name { font-weight: 500; color: var(--text-2); font-size: var(--fs-3); }
 .pe .pe-meta { color: var(--text-3); font-size: var(--fs-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pe .pe-meta.is-error { color: var(--pe-err); }
-.pe-flag { display: grid; place-items: center; width: 28px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-s); background: none; }
+.pe-flag { display: grid; place-items: center; width: 36px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-s); background: none; }
 .pe-flag.is-error { color: var(--pe-err); }
 .pe-flag.is-warn { color: var(--pe-warn); }
 .pe-row > .pe-icon-btn { margin-top: 2px; }

@@ -2,9 +2,6 @@
 export const FALLBACK_LABELS = {
   edit_plan: "Edit plan",
   done: "Done",
-  save: "Save",
-  saved: "Saved in this browser",
-  unsaved: "Unsaved changes",
   save_failed: "This browser blocked saving. Export plan.json to keep the changes.",
   add_place: "Add place",
   add_rest: "Add rest",
@@ -27,10 +24,7 @@ export const FALLBACK_LABELS = {
   keyboard_hint:
     "Alt+↑/↓ moves a stop, Alt+←/→ (or Shift+Alt+←/→) moves it to another day, Delete removes it, Ctrl+Z undoes.",
   to_fix: "{n} to fix",
-  note_1: "{n} note",
-  notes_n: "{n} notes",
   no_errors: "Nothing to fix",
-  all_good: "Every check passes",
   undo: "Undo",
   undo_hint: "Undo with Ctrl+Z.",
   announce_undone: "Undone",
@@ -42,7 +36,6 @@ export const FALLBACK_LABELS = {
   picker_source: "Places or nearby spots",
   why_first: "Already the first stop",
   why_last: "Already the last stop",
-  why_saved: "No unsaved changes",
   day_stats: "{places} places · {travel} min on the road · back {end}",
   leg: "{n} min",
   leg_estimate: "~{n} min",

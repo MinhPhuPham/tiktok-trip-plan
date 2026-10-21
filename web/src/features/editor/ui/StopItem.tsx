@@ -1,12 +1,12 @@
 import { useId, useState, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
-import { REST_REF } from "../../../data/types";
-import { ON_LEG } from "../logic/constants";
+import { CENTER_REF, REST_REF } from "../../../data/types";
+import { useTripActions } from "../../../state/hooks";
 import { slotById } from "../logic/context";
-import { issueText, notesText } from "../logic/issues";
+import { issueText } from "../logic/issues";
 import type { Issue, TimedStop } from "../logic/types";
+import { byLevel, notesLabel } from "../planNotes";
 import type { DraftStop } from "../session/session";
 import { restName, slotName, starsOf } from "../text";
-import { IssueList } from "./IssueList";
 import { PeIcon } from "./PeIcon";
 import { useEditorText, useIssueWords, useSession, useSessionActions } from "./sessionContext";
 
@@ -15,7 +15,6 @@ export type DropMark = "before" | "after" | null;
 export interface WhyIds {
   first: string;
   last: string;
-  saved: string;
   max: string;
   keys: string;
 }
@@ -69,6 +68,7 @@ export function StopItem(props: StopItemProps) {
   const { stop, index, dayIndex, dayCount, stopCount, number, timed, issues, leg, open, dropMark, dragging, why } = props;
   const session = useSession();
   const actions = useSessionActions();
+  const { openCard } = useTripActions();
   const words = useEditorText();
   const issueWords = useIssueWords();
   const { t, time, tr } = words;
@@ -79,8 +79,7 @@ export function StopItem(props: StopItemProps) {
   const node = session.ctx.nodes.get(stop.ref);
   const isRest = stop.ref === REST_REF;
   const name = isRest ? restName(session.model, tr) : (node?.name ?? stop.ref);
-  const errorCount = issues.filter((x) => x.level === "error").length;
-  const hasError = errorCount > 0;
+  const hasError = issues.some((x) => x.level === "error");
   const hasWarn = !hasError && issues.length > 0;
   const first = dayIndex === 0 && index === 0;
   const last = dayIndex === dayCount - 1 && index === stopCount - 1;
@@ -93,13 +92,14 @@ export function StopItem(props: StopItemProps) {
         ? [t("nearby")]
         : [];
   const metaText = meta.filter(Boolean).join(" · ");
-  const flagTitle = issues.map((x) => issueText(issueWords, x)).join("\n");
-  const issueSummary = [
-    errorCount ? t("to_fix", { n: errorCount }) : "",
-    issues.length > errorCount ? notesText(t, issues.length - errorCount) : "",
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const issueSummary = issues.length
+    ? notesLabel(
+        tr,
+        issues.map((x) => ({ level: x.level, text: issueText(issueWords, x) })).sort(byLevel),
+      )
+    : "";
+  const cardId = isRest ? CENTER_REF : stop.ref;
+  const hasCard = session.model.target(cardId) != null;
   const noteField = words.lang === "vi" ? "reason_vi" : "reason";
   const note = typedNote ?? stop[noteField];
 
@@ -166,18 +166,23 @@ export function StopItem(props: StopItemProps) {
             <span id={issueId} hidden>
               {issueSummary}
             </span>
-            {/* Out of the tab order: the stop's own button carries the summary and expands it too. */}
-            <button
-              type="button"
-              tabIndex={-1}
-              className={hasError ? "pe-flag is-error" : "pe-flag is-warn"}
-              aria-label={issueSummary}
-              aria-expanded={open}
-              title={flagTitle}
-              onClick={() => actions.toggle(stop.uid)}
-            >
-              <PeIcon name={hasError ? "error" : "warn"} />
-            </button>
+            {/* The words live in the place card; the stop's own button describes them too. */}
+            {hasCard ? (
+              <button
+                type="button"
+                className={hasError ? "pe-flag is-error" : "pe-flag is-warn"}
+                data-fk={`flag:${stop.uid}`}
+                aria-label={issueSummary}
+                title={issueSummary}
+                onClick={() => openCard(cardId)}
+              >
+                <PeIcon name={hasError ? "error" : "warn"} />
+              </button>
+            ) : (
+              <span className={hasError ? "pe-flag is-error" : "pe-flag is-warn"} role="img" aria-label={issueSummary}>
+                <PeIcon name={hasError ? "error" : "warn"} />
+              </span>
+            )}
           </>
         ) : null}
         <button
@@ -191,7 +196,6 @@ export function StopItem(props: StopItemProps) {
           <PeIcon name="x" />
         </button>
       </div>
-      <IssueList issues={issues.filter((x) => !ON_LEG.has(x.rule))} withWarnings={open} />
       {open ? (
         <div className="pe-more">
           <label className="pe-field">

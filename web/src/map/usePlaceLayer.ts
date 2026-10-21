@@ -120,6 +120,16 @@ export function usePlaceLayer(handle: MapHandle | null): void {
     map.on("zoomend moveend", markCluster);
     cluster.on("animationend", markCluster);
 
+    /* What a finger can reach: each shown pin, or the cluster drawn in its place. */
+    const stopReach = handle.reach.add(() => {
+      const drawn = new Set<L.Marker>();
+      for (const pin of pins.values()) {
+        const shown = pin.where === "cluster" ? cluster.getVisibleParent(pin.marker) : pin.where === "focus" ? pin.marker : null;
+        if (shown?.getElement()) drawn.add(shown);
+      }
+      return drawn;
+    });
+
     const selectPinInputs = pinInputs(model);
     const sync = ([tab, filters, hidden, showHidden, rawPlan, focusDay, selected, hover]: ReturnType<typeof selectPinInputs>) => {
       const plan = getTripPlan(model, rawPlan);
@@ -165,6 +175,7 @@ export function usePlaceLayer(handle: MapHandle | null): void {
       },
     );
     return () => {
+      stopReach();
       stopPins();
       stopLang();
       map.off("zoomend moveend", markCluster);

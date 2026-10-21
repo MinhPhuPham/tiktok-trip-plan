@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from "react";
 import { TripModelContext } from "../data/context";
 import { buildTripModel } from "../data/model";
+import { todayTripDay } from "../data/stops";
 import { planFromData, type TripData } from "../data/types";
-import { browserLang } from "../i18n/shellText";
+import { defaultLang } from "../i18n/shellText";
 import { StoreProvider } from "../state/StoreProvider";
 import type { TripStoreInit } from "../state/store";
 import { matches, PHONE_QUERY } from "./viewport";
@@ -19,8 +20,9 @@ export function TripProviders({ data, children }: TripProvidersProps) {
     city: data.city,
     isPlace: (id) => model.placeById.has(id),
     langs: model.langs,
-    defaultLang: browserLang(model.langs),
+    defaultLang: defaultLang(model.langs),
     plan: planFromData(data),
+    openDay: todayTripDay(data),
     phone: matches(PHONE_QUERY),
     online: navigator.onLine,
   }));

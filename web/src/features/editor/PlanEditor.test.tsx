@@ -4,7 +4,7 @@ import { buildTripModel } from "../../data/model";
 import { planFromData } from "../../data/types";
 import { TripStoreContext } from "../../state/context";
 import { createTripStore } from "../../state/store";
-import { makeDay, makeStop, makeTrip } from "../../test/fixtures";
+import { closingTrip, makeDay, makeStop, makeTrip } from "../../test/fixtures";
 import PlanEditor from "./PlanEditor";
 
 function renderEditor({ data = makeTrip(), day }: { data?: ReturnType<typeof makeTrip>; day?: number } = {}) {
@@ -46,8 +46,35 @@ describe("PlanEditor", () => {
       stopNames().findIndex((n) => n.includes("Phở Gia Truyền")),
     );
     expect(store.getState().plan.edited).toBe(true);
-    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
     expect(document.activeElement?.textContent).toContain("Lookout");
+  });
+
+  it("shows no save status or check summary; edits save themselves", () => {
+    renderEditor();
+    const bar = document.querySelector<HTMLElement>(".pe-bar")!;
+    expect(within(bar).getAllByRole("button").map((b) => b.textContent)).toEqual(["Done"]);
+    expect(bar).not.toHaveTextContent(/saved|unsaved|to fix|nothing to fix|note/i);
+    act(() => {
+      fireEvent.keyDown(stopButton("Lookout"), { key: "ArrowUp", altKey: true });
+    });
+    expect(localStorage.length).toBe(1);
+    expect(within(bar).getAllByRole("button").map((b) => b.textContent)).toEqual(["Done"]);
+  });
+
+  it("flags a stop with an icon only, jumps to the first problem and opens the card from the flag", () => {
+    const store = renderEditor({ data: closingTrip() });
+    const flag = screen.getByRole("button", { name: /^1 problem, 1 note: Arrives 8:0\d AM with no time left before closing/ });
+    expect(document.querySelector(".pe-issues")).toBeNull();
+    expect(stopButton("Phở Gia Truyền")).toHaveAccessibleDescription(/^1 problem, 1 note: Arrives/);
+    fireEvent.click(screen.getByRole("button", { name: "1 to fix" }));
+    expect(document.activeElement).toBe(stopButton("Phở Gia Truyền"));
+    fireEvent.click(flag);
+    expect(store.getState().selected).toBe("a");
+    act(() => {
+      fireEvent.keyDown(stopButton("Phở Gia Truyền"), { key: "Delete" });
+    });
+    expect(screen.queryByRole("button", { name: "1 to fix" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /problem/ })).not.toBeInTheDocument();
   });
 
   it("removes a stop with Delete (not Backspace) and keeps focus on the next stop", () => {

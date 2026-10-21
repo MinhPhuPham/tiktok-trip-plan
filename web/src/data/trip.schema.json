@@ -1,0 +1,1333 @@
+{
+  "$id": "https://tiktok-trip.local/trip.schema.json",
+  "$defs": {
+    "Basemap": {
+      "properties": {
+        "id": {
+          "enum": [
+            "google",
+            "openfreemap",
+            "esri_streets",
+            "esri_satellite",
+            "osm"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "default": "raster",
+          "enum": [
+            "raster",
+            "vector"
+          ],
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "attribution": {
+          "type": "string"
+        },
+        "max_zoom": {
+          "type": "integer"
+        },
+        "subdomains": {
+          "default": "abc",
+          "type": "string"
+        },
+        "labels_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "retina": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "url",
+        "attribution",
+        "max_zoom",
+        "subdomains",
+        "labels_url",
+        "retina"
+      ],
+      "title": "Basemap",
+      "type": "object"
+    },
+    "GoogleBasemap": {
+      "properties": {
+        "name": {
+          "default": "Google Maps",
+          "type": "string"
+        },
+        "src": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "src"
+      ],
+      "title": "GoogleBasemap",
+      "type": "object"
+    },
+    "MapBestTime": {
+      "properties": {
+        "hours": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "days": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "months": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deadline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "hours",
+        "days",
+        "months",
+        "deadline",
+        "source"
+      ],
+      "title": "MapBestTime",
+      "type": "object"
+    },
+    "MapCenter": {
+      "properties": {
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "source": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "maps_url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "lat",
+        "lng",
+        "kind",
+        "name",
+        "source",
+        "maps_url"
+      ],
+      "title": "MapCenter",
+      "type": "object"
+    },
+    "MapDay": {
+      "properties": {
+        "day": {
+          "type": "integer"
+        },
+        "color": {
+          "type": "string"
+        },
+        "areas": {
+          "type": "string"
+        },
+        "span": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "directions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "stops": {
+          "items": {
+            "$ref": "#/$defs/MapStop"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "day",
+        "color",
+        "areas",
+        "span",
+        "directions",
+        "stops"
+      ],
+      "title": "MapDay",
+      "type": "object"
+    },
+    "MapHours": {
+      "description": "Display text per language plus the raw periods the plan editor checks arrivals against.",
+      "properties": {
+        "en": {
+          "type": "string"
+        },
+        "vi": {
+          "type": "string"
+        },
+        "periods": {
+          "items": {
+            "$ref": "#/$defs/OpeningPeriod"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "en",
+        "vi",
+        "periods"
+      ],
+      "title": "MapHours",
+      "type": "object"
+    },
+    "MapLabels": {
+      "description": "labels[lang] in trip.json: the map chrome (`ui`) plus the shared trip vocabulary.",
+      "properties": {
+        "ui": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "categories": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "directions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "no_direction": {
+          "type": "string"
+        },
+        "priorities": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "day": {
+          "type": "string"
+        },
+        "best_time": {
+          "type": "string"
+        },
+        "heuristic": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "directions_link": {
+          "type": "string"
+        },
+        "leg": {
+          "type": "string"
+        },
+        "no_plan": {
+          "type": "string"
+        },
+        "twelve_hour": {
+          "type": "boolean"
+        },
+        "day_units": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "stop_kinds": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "tags_title": {
+          "type": "string"
+        },
+        "best_time_why": {
+          "type": "string"
+        },
+        "kinds": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "unplaced_codes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "ui",
+        "categories",
+        "directions",
+        "no_direction",
+        "priorities",
+        "day",
+        "best_time",
+        "heuristic",
+        "source",
+        "directions_link",
+        "leg",
+        "no_plan",
+        "twelve_hour",
+        "day_units",
+        "stop_kinds",
+        "tags",
+        "tags_title",
+        "best_time_why",
+        "kinds",
+        "unplaced_codes"
+      ],
+      "title": "MapLabels",
+      "type": "object"
+    },
+    "MapNearby": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "kind_label": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "rating": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maps_url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "kind_label",
+        "lat",
+        "lng",
+        "rating",
+        "maps_url"
+      ],
+      "title": "MapNearby",
+      "type": "object"
+    },
+    "MapPlace": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "sector": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "distance_km": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "zone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "priority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stars": {
+          "type": "string"
+        },
+        "rating": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rating_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "price": {
+          "type": "string"
+        },
+        "must_try": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "videos": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "maps_url": {
+          "type": "string"
+        },
+        "hours": {
+          "$ref": "#/$defs/MapHours"
+        },
+        "best": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "best_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "best_why": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "best_time": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MapBestTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "preference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "day": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "stop": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "category",
+        "address",
+        "lat",
+        "lng",
+        "sector",
+        "color",
+        "distance_km",
+        "zone",
+        "priority",
+        "stars",
+        "rating",
+        "rating_count",
+        "price",
+        "must_try",
+        "videos",
+        "maps_url",
+        "hours",
+        "best",
+        "best_source",
+        "best_why",
+        "best_time",
+        "tags",
+        "preference",
+        "day",
+        "stop"
+      ],
+      "title": "MapPlace",
+      "type": "object"
+    },
+    "MapPlanConfig": {
+      "description": "The plan rules the in-browser editor needs, serialised with camelCase keys.",
+      "properties": {
+        "dayStart": {
+          "type": "string"
+        },
+        "dayEnd": {
+          "type": "string"
+        },
+        "rhythm": {
+          "items": {
+            "$ref": "#/$defs/MapRhythmSlot"
+          },
+          "type": "array"
+        },
+        "serviceMinutes": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "nearbyServiceMinutes": {
+          "type": "integer"
+        },
+        "restMinutes": {
+          "type": "integer"
+        },
+        "restMinMinutes": {
+          "type": "integer"
+        },
+        "restAtCenter": {
+          "type": "boolean"
+        },
+        "targetPlacesPerDay": {
+          "type": "integer"
+        },
+        "travelmode": {
+          "type": "string"
+        },
+        "tripDays": {
+          "type": "integer"
+        },
+        "maxPlacesPerDay": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxNearbyPerDay": {
+          "type": "integer"
+        },
+        "dated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "dayStart",
+        "dayEnd",
+        "rhythm",
+        "serviceMinutes",
+        "nearbyServiceMinutes",
+        "restMinutes",
+        "restMinMinutes",
+        "restAtCenter",
+        "targetPlacesPerDay",
+        "travelmode",
+        "tripDays",
+        "maxPlacesPerDay",
+        "maxNearbyPerDay",
+        "dated"
+      ],
+      "title": "MapPlanConfig",
+      "type": "object"
+    },
+    "MapPreferences": {
+      "description": "input/preferences.yaml as read by the export; the map adds hidden places to `removed`.",
+      "properties": {
+        "must_go": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "removed": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "must_go",
+        "removed"
+      ],
+      "title": "MapPreferences",
+      "type": "object"
+    },
+    "MapRay": {
+      "properties": {
+        "sector": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "sector",
+        "color",
+        "lat",
+        "lng"
+      ],
+      "title": "MapRay",
+      "type": "object"
+    },
+    "MapRhythmSlot": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "start": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        },
+        "name_en": {
+          "type": "string"
+        },
+        "name_vi": {
+          "type": "string"
+        },
+        "categories": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "start",
+        "end",
+        "name_en",
+        "name_vi",
+        "categories"
+      ],
+      "title": "MapRhythmSlot",
+      "type": "object"
+    },
+    "MapRing": {
+      "properties": {
+        "km": {
+          "type": "number"
+        },
+        "label": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "km",
+        "label",
+        "lat",
+        "lng"
+      ],
+      "title": "MapRing",
+      "type": "object"
+    },
+    "MapStop": {
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "slot": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "arrive": {
+          "type": "string"
+        },
+        "depart": {
+          "type": "string"
+        },
+        "travel_min_to_next": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "activity": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "time": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "reason_vi": {
+          "default": "",
+          "type": "string"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "maps_url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "ref",
+        "slot",
+        "arrive",
+        "depart",
+        "travel_min_to_next",
+        "number",
+        "name",
+        "activity",
+        "time",
+        "reason",
+        "reason_vi",
+        "lat",
+        "lng",
+        "maps_url"
+      ],
+      "title": "MapStop",
+      "type": "object"
+    },
+    "MapTravel": {
+      "description": "data/plan/travel_minutes.csv: ids = \"center\", place ids, nearby ids; minutes[from][to].",
+      "properties": {
+        "ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "minutes": {
+          "items": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "ids",
+        "minutes"
+      ],
+      "title": "MapTravel",
+      "type": "object"
+    },
+    "MapUnplaced": {
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "reason_text": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "ref",
+        "name",
+        "reason",
+        "code",
+        "reason_text"
+      ],
+      "title": "MapUnplaced",
+      "type": "object"
+    },
+    "MediaAttribution": {
+      "description": "A photo author Google requires to be shown with the photo (display name, profile link).",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "uri": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name",
+        "uri"
+      ],
+      "title": "MediaAttribution",
+      "type": "object"
+    },
+    "MediaItem": {
+      "description": "One preview image of a place in output/media/index.json; `src` is relative to output/.",
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "frame",
+            "photo"
+          ],
+          "type": "string"
+        },
+        "caption": {
+          "type": "string"
+        },
+        "source_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "attributions": {
+          "items": {
+            "$ref": "#/$defs/MediaAttribution"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "src",
+        "kind",
+        "caption",
+        "source_url",
+        "attributions"
+      ],
+      "title": "MediaItem",
+      "type": "object"
+    },
+    "OpeningPeriod": {
+      "properties": {
+        "day": {
+          "description": "0=Monday ... 6=Sunday",
+          "maximum": 6,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "open": {
+          "pattern": "^\\d{2}:\\d{2}$",
+          "type": "string"
+        },
+        "close": {
+          "anyOf": [
+            {
+              "pattern": "^\\d{2}:\\d{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "day",
+        "open",
+        "close"
+      ],
+      "title": "OpeningPeriod",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": 1,
+      "type": "integer"
+    },
+    "site_name": {
+      "default": "TwLP-Trips",
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "summary": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "generated": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "center": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MapCenter"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sectors": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "sector_colors": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "sector_ink": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "category_colors": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {
+        "food": "#C95D52",
+        "cafe": "#C59711",
+        "attraction": "#0486F4",
+        "other": "#9699B4"
+      },
+      "type": "object"
+    },
+    "category_ink": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {
+        "food": "#000000",
+        "cafe": "#000000",
+        "attraction": "#000000",
+        "other": "#000000"
+      },
+      "type": "object"
+    },
+    "center_color": {
+      "type": "string"
+    },
+    "rings": {
+      "items": {
+        "$ref": "#/$defs/MapRing"
+      },
+      "type": "array"
+    },
+    "rays": {
+      "items": {
+        "$ref": "#/$defs/MapRay"
+      },
+      "type": "array"
+    },
+    "places": {
+      "items": {
+        "$ref": "#/$defs/MapPlace"
+      },
+      "type": "array"
+    },
+    "nearby": {
+      "items": {
+        "$ref": "#/$defs/MapNearby"
+      },
+      "type": "array"
+    },
+    "days": {
+      "items": {
+        "$ref": "#/$defs/MapDay"
+      },
+      "type": "array"
+    },
+    "day_colors": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "day_ink": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "unplaced": {
+      "items": {
+        "$ref": "#/$defs/MapUnplaced"
+      },
+      "type": "array"
+    },
+    "basemaps": {
+      "items": {
+        "$ref": "#/$defs/Basemap"
+      },
+      "type": "array"
+    },
+    "default_basemap": {
+      "type": "string"
+    },
+    "google": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GoogleBasemap"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "labels": {
+      "additionalProperties": {
+        "$ref": "#/$defs/MapLabels"
+      },
+      "type": "object"
+    },
+    "rest_name": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "config": {
+      "$ref": "#/$defs/MapPlanConfig"
+    },
+    "travel": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MapTravel"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "roads": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "roads_enabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "roads_endpoint": {
+      "default": "",
+      "type": "string"
+    },
+    "roads_profile": {
+      "default": "",
+      "type": "string"
+    },
+    "media": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/$defs/MediaItem"
+        },
+        "type": "array"
+      },
+      "type": "object"
+    },
+    "preferences": {
+      "$ref": "#/$defs/MapPreferences"
+    },
+    "tripWeekdays": {
+      "items": {
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "tripDates": {
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "site_name",
+    "city",
+    "summary",
+    "generated",
+    "center",
+    "sectors",
+    "sector_colors",
+    "sector_ink",
+    "category_colors",
+    "category_ink",
+    "center_color",
+    "rings",
+    "rays",
+    "places",
+    "nearby",
+    "days",
+    "day_colors",
+    "day_ink",
+    "unplaced",
+    "basemaps",
+    "default_basemap",
+    "google",
+    "labels",
+    "rest_name",
+    "config",
+    "travel",
+    "roads",
+    "roads_enabled",
+    "roads_endpoint",
+    "roads_profile",
+    "media",
+    "preferences",
+    "tripWeekdays",
+    "tripDates"
+  ],
+  "title": "MapData",
+  "type": "object"
+}

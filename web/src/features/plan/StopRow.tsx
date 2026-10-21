@@ -1,8 +1,10 @@
 import type { TripModel } from "../../data/model";
+import { useStopNotes } from "../../data/planIssues";
 import { stopActivity, stopName, stopPlace, stopTargetId, stopTime } from "../../data/stops";
 import { CENTER_REF, type TripDay, type TripStop } from "../../data/types";
 import type { Translator } from "../../i18n/translator";
 import { classes, cssVars } from "../../lib/css";
+import { Icon } from "../../ui/Icon";
 import { PlaceStars } from "../../ui/PlaceStars";
 
 interface StopRowProps {
@@ -23,6 +25,7 @@ export function StopRow({ model, t, day, stop, hidden, selected, onOpen }: StopR
   const hoverId = !isHidden && target !== CENTER_REF && model.target(target) ? target : undefined;
   const activity = stopActivity(model, t, stop);
   const reason = t.pick(stop.reason, stop.reason_vi);
+  const notes = useStopNotes(stop);
   return (
     <li
       className={classes("stop", !visit && "muted", isHidden && "is-hidden")}
@@ -48,6 +51,11 @@ export function StopRow({ model, t, day, stop, hidden, selected, onOpen }: StopR
                 {activity}
               </span>
             )}
+            {notes ? (
+              <span className={classes("stop-flag", notes.level === "error" && "is-error")} role="img" aria-label={notes.label}>
+                <Icon name={notes.level === "error" ? "alert" : "warn"} />
+              </span>
+            ) : null}
           </span>
           <span className="stop-name">
             <PlaceStars place={place} t={t} />

@@ -103,6 +103,7 @@ export function makeTrip(patch: Partial<TripData> = {}): TripData {
   ];
   return {
     schema_version: TRIP_SCHEMA_VERSION,
+    site_name: "TwLP-Trips",
     city: "Đà Lạt",
     summary: { en: "3 days · Driving", vi: "3 ngày · Lái xe" },
     generated: { en: "Oct 20, 2026", vi: "20/10/2026" },
@@ -158,10 +159,39 @@ export function makeTrip(patch: Partial<TripData> = {}): TripData {
     },
     travel: null,
     roads: {},
+    roads_enabled: false,
+    roads_endpoint: "",
+    roads_profile: "",
     media: {},
     preferences: { must_go: ["Phở Gia Truyền"], removed: [] },
     tripWeekdays: [5, 6, 0],
     tripDates: [null, null, null],
     ...patch,
+  };
+}
+
+/** Day 1: a (9:00), b (10:15), a rest, nearby n1 (11:45); at 10:30 the next stop is b. */
+export function threeVisitTrip(): TripData {
+  return makeTrip({
+    days: [
+      makeDay(1, [
+        makeStop("start", null),
+        makeStop("place", "a", { arrive: "09:00", depart: "10:00", travel_min_to_next: 7 }),
+        makeStop("place", "b", { arrive: "10:15", depart: "11:00", travel_min_to_next: 12 }),
+        makeStop("rest", null, { arrive: "11:15", depart: "11:30" }),
+        makeStop("nearby", "n1", { arrive: "11:45", depart: "12:15" }),
+        makeStop("end", null, { arrive: "18:00" }),
+      ]),
+    ],
+  });
+}
+
+/** makeTrip with place a closing at 8:10: Day 1 reaches it about 8:03 and needs 30 min, a "closed" problem. */
+export function closingTrip(patch: Partial<TripData> = {}): TripData {
+  const base = makeTrip(patch);
+  const periods = Array.from({ length: 7 }, (_, day) => ({ day, open: "06:00", close: "08:10" }));
+  return {
+    ...base,
+    places: base.places.map((p) => (p.id === "a" ? { ...p, hours: { en: "6:00–8:10", vi: "6:00–8:10", periods } } : p)),
   };
 }

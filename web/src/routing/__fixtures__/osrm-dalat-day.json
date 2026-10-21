@@ -1,0 +1,449 @@
+{
+ "code": "Ok",
+ "waypoints": [
+  {
+   "name": "",
+   "location": [
+    108.459121,
+    11.938337
+   ],
+   "distance": 1.001536985
+  },
+  {
+   "name": "",
+   "location": [
+    108.507959,
+    11.940204
+   ],
+   "distance": 2.142352096
+  },
+  {
+   "name": "",
+   "location": [
+    108.512764,
+    11.941661
+   ],
+   "distance": 8.336731786
+  },
+  {
+   "name": "",
+   "location": [
+    108.464128,
+    11.937549
+   ],
+   "distance": 0.4657589235
+  }
+ ],
+ "routes": [
+  {
+   "distance": 18302.1,
+   "duration": 1487.2,
+   "weight": 1502.8,
+   "weight_name": "routability",
+   "legs": [
+    {
+     "distance": 7980.8,
+     "duration": 420.9,
+     "summary": "Hùng Vương, Tự Phước",
+     "weight": 422.2,
+     "steps": [
+      {
+       "geometry": "suzgAol~tS@H",
+       "maneuver": {
+        "type": "depart",
+        "location": [
+         108.459121,
+         11.938337
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 5.5,
+       "distance": 5.5
+      },
+      {
+       "geometry": "quzgAel~tSeBY{A_@a@Ga@E]FUPGHEPCLCLAT@`@@`@_@dA",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.459071,
+         11.938334
+        ]
+       },
+       "name": "Khe Sanh",
+       "mode": "driving",
+       "duration": 13,
+       "distance": 307
+      },
+      {
+       "geometry": "_a{gA{f~tSGB",
+       "maneuver": {
+        "type": "roundabout",
+        "location": [
+         108.458219,
+         11.940158
+        ]
+       },
+       "name": "Hùng Vương",
+       "mode": "driving",
+       "duration": 0.5,
+       "distance": 4.8
+      },
+      {
+       "geometry": "ga{gAwf~tS[[g@[_@k@[k@Q_@IYGWKk@Cg@Eq@Ew@OmDAO@wA?G?SDqAB{A",
+       "maneuver": {
+        "type": "exit roundabout",
+        "location": [
+         108.458204,
+         11.940199
+        ]
+       },
+       "name": "Hùng Vương",
+       "mode": "driving",
+       "duration": 22.4,
+       "distance": 522.1
+      },
+      {
+       "geometry": "mg{gAwb_uSEOGMEIEG",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.462676,
+         11.941191
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 1.4,
+       "distance": 30.2
+      },
+      {
+       "geometry": "gh{gAgd_uSOKSGWCSCW?W?w@?y@Ae@Ao@IaEoAmAe@_Bm@mA_@cEcB}Ak@WMUQcB}AKK}@aAcAeAy@y@oBqBe@c@a@e@k@k@_@_@[_@Y_@IOGKM[IYKm@Gc@AUA[?k@?W?UBm@FmB@_@Bm@D_AD}@JsAHgADc@Dm@F{@@MBUBQH]JUP]LSVWXQ^Sh@YtAk@tAe@TIfB]pCk@r@Ux@i@z@o@r@a@bA]z@SXGhEuAvB{@t@i@r@w@NW^o@l@{AFOx@gAzBcBjAqAb@_AV}@J[xBwDj@cAX}@DWAGSoBk@_Bk@kBa@kCESAGIc@AMKc@Ka@MUk@s@{AaAe@[[[MQIOGOQq@CQESCUGaAIq@Qq@a@o@s@i@kAc@ICa@OqASoAQK?oDDU?OAYCYGUEOISKSQOQOSKSIWkBoGGk@Aq@Dc@DU",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.462918,
+         11.941319
+        ]
+       },
+       "name": "Hùng Vương",
+       "mode": "driving",
+       "duration": 198.4,
+       "distance": 4690.6
+      },
+      {
+       "geometry": "wh|gAiuduSBO",
+       "maneuver": {
+        "type": "rotary",
+        "location": [
+         108.49125,
+         11.946524
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 0.4,
+       "distance": 8.6
+      },
+      {
+       "geometry": "sh|gAyuduSPc@b@{@",
+       "maneuver": {
+        "type": "exit rotary",
+        "location": [
+         108.491326,
+         11.946502
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 2.6,
+       "distance": 61.1
+      },
+      {
+       "geometry": "}f|gAyxduSd@Yh@[tD}A`@S^]Zg@Lo@GmBAWC_@GoACi@M{AGa@GYGYk@_CCMI[Oq@AG]yAa@gB_@gBa@kBWkAg@{BWkACUAQB{@N_BXsC\\oDFcAV}CF}@Hs@Fa@Ns@H_@V{@Vw@x@yB^aA`@cAXo@PUt@_Az@_AJS",
+       "maneuver": {
+        "type": "new name",
+        "location": [
+         108.491812,
+         11.946228
+        ]
+       },
+       "name": "Tự Phước",
+       "mode": "driving",
+       "duration": 83.2,
+       "distance": 1961.8
+      },
+      {
+       "geometry": "aw{gAw}guSj@BX@r@K`@CvAITCZIRCVAt@@tBHtALv@DZBPB",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.507956,
+         11.943685
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 93.5,
+       "distance": 389.2
+      },
+      {
+       "geometry": "ga{gAw}guS",
+       "maneuver": {
+        "type": "arrive",
+        "location": [
+         108.507959,
+         11.940204
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 0,
+       "distance": 0
+      }
+     ]
+    },
+    {
+     "distance": 2456.4,
+     "duration": 687,
+     "summary": "Tự Phước",
+     "weight": 687,
+     "steps": [
+      {
+       "geometry": "ga{gAw}guSr@ND?",
+       "maneuver": {
+        "type": "depart",
+        "location": [
+         108.507959,
+         11.940204
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 8.5,
+       "distance": 33.9
+      },
+      {
+       "geometry": "m_{gAg}guSJGzAC",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.507876,
+         11.939909
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 41.5,
+       "distance": 58.6
+      },
+      {
+       "geometry": "e|zgAs}guS{ABKFE?eAS[Cw@EuAMuBIu@AW@SB[HUBwAHa@Bs@JYAk@C",
+       "maneuver": {
+        "type": "continue",
+        "location": [
+         108.507939,
+         11.939394
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 119.2,
+       "distance": 481.6
+      },
+      {
+       "geometry": "aw{gAw}guSHSFUHe@DULa@Zo@^q@Xe@`@o@Zi@L]HWF]@]?eAE{@Es@?m@BYJe@Na@Vg@PYLYDW@Q?S",
+       "maneuver": {
+        "type": "end of road",
+        "location": [
+         108.507956,
+         11.943685
+        ]
+       },
+       "name": "Tự Phước",
+       "mode": "driving",
+       "duration": 25.3,
+       "distance": 566.8
+      },
+      {
+       "geometry": "gm{gAs{huSf@AREPG",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.512737,
+         11.942116
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 7,
+       "distance": 44.4
+      },
+      {
+       "geometry": "yj{gAc|huSl@d@FDDBz@?H?HBHHLZPZFL?JAXBBBFH@j@Dn@?L?l@RXFzBJh@F`@Ld@Rr@RrCZ\\PrA^\\RZf@",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.512822,
+         11.941728
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 258.2,
+       "distance": 640.4
+      },
+      {
+       "geometry": "wkzgAunhuS[g@]SsA_@]QsC[s@Se@Sa@Mi@G{BKYGm@SM?o@?k@EIACGCC@Y?KGMQ[M[IIICI?{@?ECGE_@Y",
+       "maneuver": {
+        "type": "continue",
+        "location": [
+         108.510665,
+         11.936764
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 227.3,
+       "distance": 630.7
+      },
+      {
+       "geometry": "kj{gAw{huS",
+       "maneuver": {
+        "type": "arrive",
+        "location": [
+         108.512764,
+         11.941661
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 0,
+       "distance": 0
+      }
+     ]
+    },
+    {
+     "distance": 7864.9,
+     "duration": 379.3,
+     "summary": "Tự Phước, Hùng Vương",
+     "weight": 393.6,
+     "steps": [
+      {
+       "geometry": "kj{gAw{huSMK",
+       "maneuver": {
+        "type": "depart",
+        "location": [
+         108.512764,
+         11.941661
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 5.8,
+       "distance": 9.7
+      },
+      {
+       "geometry": "yj{gAc|huSQFSDg@@",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.512822,
+         11.941728
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 10.8,
+       "distance": 44.4
+      },
+      {
+       "geometry": "gm{gAs{huS?RAPEVMXQXWf@O`@Kd@CX?l@Dr@Dz@?dAA\\G\\IVM\\[h@a@n@Yd@_@p@[n@M`@ETId@GTIRKR{@~@u@~@QTYn@a@bA_@`Ay@xBWv@Wz@I^Or@G`@Ir@G|@W|CGbA]nDYrCO~ACz@@PBTVjAf@zBVjA`@jB^fB`@fB\\xA@FNp@HZBLj@~BFXFXF`@LzABh@FnAB^@VFlBMn@[f@_@\\a@RuD|Ai@Ze@XaBl@",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.512737,
+         11.942116
+        ]
+       },
+       "name": "Tự Phước",
+       "mode": "driving",
+       "duration": 109.4,
+       "distance": 2588.3
+      },
+      {
+       "geometry": "_j|gAkwduSG?MDKHEHCN?NFLHH",
+       "maneuver": {
+        "type": "rotary",
+        "location": [
+         108.491576,
+         11.946715
+        ]
+       },
+       "name": "Hùng Vương",
+       "mode": "driving",
+       "duration": 3,
+       "distance": 62.7
+      },
+      {
+       "geometry": "yj|gAytduSVz@f@jAjBnGHVJRNRNPRPRJNHTDXFXBN@T?nDEJ?nAPpAR`@NHBjAb@r@h@`@n@Pp@Hp@F`ABTDRBPPp@FNHNLPZZd@ZzA`Aj@r@LTJ`@Jb@@LHb@@FDR`@jCj@jBj@~ARnB@FEVY|@k@bAyBvDKZW|@c@~@kApA{BbBy@fAGNm@zA_@n@OVs@v@u@h@wBz@iEtAYF{@RcA\\s@`@{@n@y@h@s@TqCj@gB\\UHuAd@uAj@i@X_@RYPWVMRQ\\KTI\\CPCTALGz@El@Eb@IfAKrAE|@E~@Cl@A^GlBCl@?T?V?j@@Z@TFb@Jl@HXLZFJHNX^Z^^^j@j@`@d@d@b@nBpBx@x@bAdA|@`AJJbB|ATPVL|Aj@bEbBlA^~Al@lAd@`EnAn@Hd@@x@@v@?V?V?RBVBRFNJ",
+       "maneuver": {
+        "type": "exit rotary",
+        "location": [
+         108.491168,
+         11.946848
+        ]
+       },
+       "name": "Hùng Vương",
+       "mode": "driving",
+       "duration": 198.6,
+       "distance": 4688.7
+      },
+      {
+       "geometry": "gh{gAgd_uSr@?JGn@]ZMHAF@R@n@Fn@JB@dBRb@Cj@MpAw@lAw@bAQ",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.462918,
+         11.941319
+        ]
+       },
+       "name": "Hoàng Hoa Thám",
+       "mode": "driving",
+       "duration": 37.6,
+       "distance": 411.8
+      },
+      {
+       "geometry": "wrzgAci_uS\\m@RSNS",
+       "maneuver": {
+        "type": "turn",
+        "location": [
+         108.463704,
+         11.937882
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 14.1,
+       "distance": 59.2
+      },
+      {
+       "geometry": "upzgAyk_uS",
+       "maneuver": {
+        "type": "arrive",
+        "location": [
+         108.464128,
+         11.937549
+        ]
+       },
+       "name": "",
+       "mode": "driving",
+       "duration": 0,
+       "distance": 0
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -42,13 +42,16 @@ export interface EditableStop {
 
 const EDITABLE_KINDS: ReadonlySet<string> = new Set(["place", "nearby", "rest"]);
 
+/** Places, nearby spots and rests: the stops a plan lists (start and end are computed). */
+export const isEditable = (stop: { kind: string }): boolean => EDITABLE_KINDS.has(stop.kind);
+
 /** Editable stops from data.days, dropping the start and end rows. */
 export function editableDays(
   days: readonly { stops?: readonly SourceStop[] | null }[] | null | undefined,
 ): { stops: EditableStop[] }[] {
   return (days ?? []).map((day) => ({
     stops: (day.stops ?? [])
-      .filter((s) => EDITABLE_KINDS.has(s.kind))
+      .filter(isEditable)
       .map((s) => ({
         ref: s.kind === "rest" ? REST_REF : (s.ref ?? s.ref_id ?? ""),
         slot: s.slot || null,

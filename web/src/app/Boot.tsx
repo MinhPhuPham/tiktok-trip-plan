@@ -1,14 +1,16 @@
 import { Suspense, use } from "react";
 import App from "../App";
 import type { TripLoadError, TripLoadResult } from "../data/load";
-import { browserLang, shellText } from "../i18n/shellText";
+import { DEFAULT_LANG, shellText } from "../i18n/shellText";
 import { reloadWithUpdate } from "../pwa/update";
+import { loadPrefs } from "../state/persist";
 import { Icon } from "../ui/Icon";
 import { IconSprite } from "../ui/IconSprite";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { TripProviders } from "./TripProviders";
 
-const bootLang = () => browserLang(["en", "vi"]);
+/** Before the trip loads: the saved language, else the default. */
+const bootLang = () => loadPrefs().lang ?? DEFAULT_LANG;
 const text = (key: string) => shellText(bootLang(), key) ?? key;
 
 function BootScreen() {

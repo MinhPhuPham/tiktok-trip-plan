@@ -93,6 +93,8 @@ export:
   max_frames_per_place: 4    # evidence frames copied to output/media per place (menu-looking first)
   google_photos: false       # true: also download Google Maps photos (paid skus place_details_essentials,
   max_photos_per_place: 1    # place_photos; capped under quota). Show the author attribution with them
+  site_url: "https://tiktok-trip-map-dun.vercel.app"   # where output/app is deployed: link previews (og:url, canonical,
+                             # absolute og:image) need it; empty leaves them out
   # basemaps: [google, openfreemap, esri_streets, esri_satellite]   # default; add osm for OpenStreetMap tiles.
   #   Without google_map, OpenFreeMap (vector tiles, no key) is the default view, then Esri Streets.
 

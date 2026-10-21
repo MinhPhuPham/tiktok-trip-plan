@@ -1,6 +1,7 @@
 import { DOM_IDS } from "../app/ids";
 import { useTripModel } from "../data/hooks";
 import { useT } from "../i18n/useT";
+import { useRoadGeometry } from "../routing/useRoadGeometry";
 import { useTripStore } from "../state/hooks";
 import type { TripState } from "../state/store";
 import { Icon } from "../ui/Icon";
@@ -33,11 +34,12 @@ export function MapView() {
   const googleShown = useTripStore(selectGoogleShown);
   const { ref, handle, failed } = useLeafletMap();
   const basemap = useBasemap(handle);
+  const roads = useRoadGeometry();
   usePlaceLayer(handle);
   useCenterMarker(handle);
   useNearbyLayer(handle);
   useCompassLayer(handle, scheme);
-  useRouteLayer(handle, scheme);
+  useRouteLayer(handle, scheme, roads);
   useMapIntents(handle);
   useCardDismiss(handle);
   useTilePreload(handle, basemap.raster);

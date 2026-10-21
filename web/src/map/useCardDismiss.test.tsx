@@ -1,6 +1,7 @@
 import { act, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderTrip } from "../test/renderTrip";
+import { createFingerReach } from "./fingerReach";
 import L from "./leafletGlobal";
 import type { MapHandle } from "./mapCore";
 import { DISMISS_DELAY_MS, useCardDismiss } from "./useCardDismiss";
@@ -10,20 +11,20 @@ function Dismiss({ handle }: { handle: MapHandle }) {
   return null;
 }
 
-function setup() {
+function setup({ phone = false } = {}) {
   const element = document.createElement("div");
   element.tabIndex = -1;
   document.body.append(element);
   const map = L.map(element, { fadeAnimation: false, zoomAnimation: false }).setView([10.77, 106.7], 14);
-  const handle: MapHandle = { map, renderers: { compass: L.svg(), routes: L.svg(), nearby: L.svg() } };
-  const view = renderTrip(<Dismiss handle={handle} />);
+  const handle: MapHandle = { map, reach: createFingerReach(map), renderers: { compass: L.svg(), routes: L.svg(), nearby: L.svg() } };
+  const view = renderTrip(<Dismiss handle={handle} />, { phone });
   act(() => view.store.getState().actions.openCard("a", { fly: false }));
   const cleanup = () => {
     view.unmount();
     map.remove();
     element.remove();
   };
-  return { map, element, store: view.store, cleanup };
+  return { map, element, reach: handle.reach, store: view.store, cleanup };
 }
 
 describe("useCardDismiss", () => {
@@ -86,6 +87,21 @@ describe("useCardDismiss", () => {
     cleanup();
   });
 
+  it("opens the pin a finger tap lands beside instead of closing the card", () => {
+    const { map, reach, store, cleanup } = setup();
+    const marker = L.marker([10.77, 106.7]).addTo(map);
+    marker.on("click", () => store.getState().actions.openCard("b", { fly: false }));
+    reach.add(() => [marker]);
+    const beside = map.latLngToContainerPoint(marker.getLatLng()).add([16, 0]);
+    const originalEvent = Object.assign(new MouseEvent("click", { detail: 1 }), { pointerType: "touch" });
+    map.fire("click", { latlng: map.containerPointToLatLng(beside), containerPoint: beside, originalEvent });
+    act(() => {
+      vi.advanceTimersByTime(DISMISS_DELAY_MS);
+    });
+    expect(store.getState().selected).toBe("b");
+    cleanup();
+  });
+
   it("ignores clicks while no card is open", () => {
     const { element, store, cleanup } = setup();
     act(() => store.getState().actions.closeCard());
@@ -95,6 +111,44 @@ describe("useCardDismiss", () => {
       vi.advanceTimersByTime(DISMISS_DELAY_MS);
     });
     expect(close).not.toHaveBeenCalled();
+    cleanup();
+  });
+
+  it("on a phone lowers the open sheet to its peek when no card is open, after the double-click wait", () => {
+    const { element, store, cleanup } = setup({ phone: true });
+    act(() => {
+      store.getState().actions.closeCard();
+      store.getState().actions.setSheet("half");
+    });
+    fireEvent.click(element);
+    expect(store.getState().sheet).toBe("half");
+    act(() => {
+      vi.advanceTimersByTime(DISMISS_DELAY_MS);
+    });
+    expect(store.getState().sheet).toBe("peek");
+    act(() => store.getState().actions.setSheet("full"));
+    fireEvent.click(element);
+    fireEvent.dblClick(element);
+    act(() => {
+      vi.advanceTimersByTime(DISMISS_DELAY_MS * 2);
+    });
+    expect(store.getState().sheet).toBe("full");
+    cleanup();
+  });
+
+  it("closes an open card before it lowers the sheet", () => {
+    const { element, store, cleanup } = setup({ phone: true });
+    act(() => store.getState().actions.setSheet("half"));
+    fireEvent.click(element);
+    act(() => {
+      vi.advanceTimersByTime(DISMISS_DELAY_MS);
+    });
+    expect(store.getState()).toMatchObject({ selected: null, sheet: "half" });
+    fireEvent.click(element);
+    act(() => {
+      vi.advanceTimersByTime(DISMISS_DELAY_MS);
+    });
+    expect(store.getState().sheet).toBe("peek");
     cleanup();
   });
 });

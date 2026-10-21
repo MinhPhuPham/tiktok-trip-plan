@@ -9,6 +9,9 @@ import {
   CACHE_NAMES,
   LEGACY_CACHE_PREFIX,
   OFFLINE_MANIFEST_URL,
+  ROUTE_MAX_AGE_S,
+  ROUTE_MAX_ENTRIES,
+  ROUTING_HOSTS,
   TILE_HOSTS,
   TILE_MAX_ENTRIES,
   TRIP_NETWORK_TIMEOUT_S,
@@ -50,6 +53,18 @@ registerRoute(
     plugins: [
       new CacheableResponsePlugin({ statuses: [200] }),
       new ExpirationPlugin({ maxEntries: TILE_MAX_ENTRIES, purgeOnQuotaError: true }),
+    ],
+  }),
+);
+
+/** Road routes: the same waypoints give the same road, so the cached answer wins (fair use, offline). */
+registerRoute(
+  ({ url, request }) => request.method === "GET" && ROUTING_HOSTS.includes(url.hostname),
+  new CacheFirst({
+    cacheName: CACHE_NAMES.routes,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({ maxEntries: ROUTE_MAX_ENTRIES, maxAgeSeconds: ROUTE_MAX_AGE_S, purgeOnQuotaError: true }),
     ],
   }),
 );

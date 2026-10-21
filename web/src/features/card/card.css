@@ -19,6 +19,10 @@
 .card-meta { margin: -6px 0 0; color: var(--text-2); font-size: var(--fs-4); }
 .card-plan { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
 .card-label { margin: 0 0 6px; color: var(--text-3); font-size: var(--fs-4); }
+.card-notes ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.card-notes li { display: flex; align-items: flex-start; gap: 6px; color: var(--warn-text); font-size: var(--fs-4); line-height: 1.4; }
+.card-notes li.is-error { color: var(--err-text); }
+.card-notes .icon { width: 14px; height: 14px; margin-top: 2px; }
 .card-address { margin: 0; color: var(--text-3); font-size: var(--fs-4); overflow-wrap: anywhere; }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .tags li { padding: 2px 8px; border-radius: var(--radius-pill); background: var(--surface-3); color: var(--text-2); font-size: var(--fs-4); font-weight: 550; }

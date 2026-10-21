@@ -6,10 +6,10 @@ import { DOM_IDS, focusById } from "./ids";
 export function SkipLink() {
   const t = useT();
   const store = useTripStoreApi();
-  const { setSheetOpen } = useTripActions();
+  const { setSheet } = useTripActions();
   const skip = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    if (store.getState().phone) setSheetOpen(false);
+    if (store.getState().phone) setSheet("peek");
     focusById(DOM_IDS.map);
   };
   return (

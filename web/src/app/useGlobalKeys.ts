@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { isTypingTarget } from "../lib/dom";
 import { useTripStoreApi } from "../state/hooks";
+import { selectSheetOpen } from "../state/store";
 import { DOM_IDS, focusById } from "./ids";
 
 const hasText = (node: Element | null): boolean =>
@@ -15,7 +16,8 @@ export function useGlobalKeys(): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const dialogOpen = Boolean(document.querySelector("dialog[open]"));
-      const { layersOpen, selected, phone, sheetOpen, editing, actions } = store.getState();
+      const state = store.getState();
+      const { layersOpen, selected, phone, editing, actions } = state;
       if (event.key === "Escape") {
         if (event.defaultPrevented || dialogOpen) return;
         if (layersOpen) {
@@ -23,8 +25,8 @@ export function useGlobalKeys(): void {
           focusById(DOM_IDS.layersButton);
         } else if (selected) {
           actions.closeCard();
-        } else if (phone && sheetOpen && !editing && !hasText(document.activeElement)) {
-          actions.setSheetOpen(false);
+        } else if (phone && selectSheetOpen(state) && !editing && !hasText(document.activeElement)) {
+          actions.setSheet("peek");
           focusById(DOM_IDS.sheetToggle);
         }
         return;
@@ -33,7 +35,7 @@ export function useGlobalKeys(): void {
       if (!plainSlash || isTypingTarget(document.activeElement) || dialogOpen) return;
       event.preventDefault();
       actions.setTab("places");
-      if (phone) actions.setSheetOpen(true);
+      if (phone) actions.setSheet("full");
       requestAnimationFrame(() => focusById(DOM_IDS.search));
     };
     document.addEventListener("keydown", onKeyDown);

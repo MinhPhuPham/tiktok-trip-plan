@@ -45,18 +45,38 @@ The trip map is a React + TypeScript app in `web/`; it replaced the earlier hand
   Exports older than those fields use the copy in `web/src/data/palette.ts` (a test keeps it equal
   to the schema defaults).
 - A render error inside the app shows the load-error screen (Reload) instead of a blank page.
-- Both builds' `index.html` contain exactly one
-  `<script id="trip-data" type="application/json">__TRIP_DATA__</script>` and `<title>__TRIP_TITLE__</title>`.
-  - single: Python replaces both (`</` escaped as `<\/`, `<!--` as `<\!--`).
-  - app: Python leaves `index.html` untouched (it is precached by revision); the app sets
-    `document.title` from the data, and an unreplaced `__TRIP_DATA__` means "fetch trip.json".
-- `manifest.webmanifest` in the app build holds `"__TRIP_NAME__"` and `"__TRIP_SHORT_NAME__"`;
-  Python fills them (city). The manifest is not precached; the SW warms it with `trip.json` and serves it network-first.
+- Both builds' `index.html` (`<html lang="vi">`) contain exactly one
+  `<script id="trip-data" type="application/json">__TRIP_DATA__</script>`, one
+  `<title>__TRIP_TITLE__</title>` and one `<!--__SEO_HEAD__-->` (right after the title).
+  - Python fills the title with `SITE_NAME` ("TwLP-Trips", `export/site.py`) and the SEO block
+    (`site.head_tags`) in both builds: description (Vietnamese), `apple-mobile-web-app-title`,
+    Open Graph (`og:type`, `og:site_name`, `og:title` = the title, `og:description`, `og:locale` vi_VN +
+    alternate en_US), `twitter:card`. The app build adds `og:image` (+ type, width, height, alt) and,
+    with `export.site_url`, the canonical link, `og:url` and a JSON-LD `WebSite`; map.html gets no
+    image or URL tags. Crawlers run no JavaScript, so these tags must be static.
+  - single: Python also replaces `__TRIP_DATA__` (`</` escaped as `<\/`, `<!--` as `<\!--`).
+  - app: `__TRIP_DATA__` stays, meaning "fetch trip.json". The app sets `document.title` from
+    `data.site_name` (the same `SITE_NAME`; keeps `npm run dev` titled) and `<html lang>` from the language.
+  - Service worker: index.html is precached by the revision computed at web build, and navigations
+    are served from that precache. Workbox downloads the file from the host at install, so the shell
+    holds the head of the export that was live then; a re-export without a web rebuild keeps the same
+    revision, so installed apps keep the older meta tags (the title never changes, only description
+    counts and the image version do). Crawlers do not run the service worker and always get the
+    deployed file (`no-cache` on Vercel).
+- `manifest.webmanifest` in the app build holds `"__TRIP_NAME__"`, `"__TRIP_SHORT_NAME__"` and
+  `"__TRIP_DESCRIPTION__"`; Python fills them (`TwLP-Trips – <city>`, `TwLP-Trips`, the meta
+  description; `lang` is `vi`). The manifest is not precached; the SW warms it with `trip.json` and
+  serves it network-first.
+- Language: a first visit opens in Vietnamese (`DEFAULT_LANG` in `i18n/shellText.ts`) whatever the
+  browser language; a language saved in the persisted prefs wins (also for the boot and load-error
+  screens). The Excel workbooks are unaffected.
 
 ## Python export writes
 
-`output/app/` = copy of `web_dist/app/` + `trip.json` + filled `manifest.webmanifest` + `media/`
-(copy of `output/media/`) + `offline.json`:
+`output/app/` = copy of `web_dist/app/` with `index.html` filled (title + SEO block) + `trip.json` +
+filled `manifest.webmanifest` + `og-image.png` (1200×630 preview card, `export/og_image.py`, Pillow,
+system font with Vietnamese diacritics or Pillow's default) + `robots.txt` + `media/` (copy of
+`output/media/`) + `offline.json`:
 
 ```json
 {"version": "<sha256[:16] of trip.json + media list>", "urls": ["trip.json", "media/<place>/frame-….jpg", "…"]}
@@ -80,15 +100,22 @@ The trip map is a React + TypeScript app in `web/`; it replaced the earlier hand
 - Runtime: `trip.json` and `manifest.webmanifest` network-first (3 s timeout, cache fallback); `media/` cache-first;
   basemap tiles, styles, glyphs, sprites stale-while-revalidate with an entry cap
   (hosts: `server.arcgisonline.com`, `tile.openstreetmap.org`, `tiles.openfreemap.org`; keep in sync with
-  `map_data.TILE_HOSTS`); never cache Google Maps hosts.
+  `map_data.TILE_HOSTS`); OSRM route answers (`routing.openstreetmap.de`, `map_data.ROUTING_HOSTS`)
+  cache-first, 500 entries, 30 days; never cache Google Maps hosts. A Python test keeps both host
+  lists in `pwa/constants.ts` equal to the Python ones.
 - Updates: new SW waits; the app shows a toast "New version, Reload" (`registerType: "prompt"`).
 - Tile preload (`map/useTilePreload.ts`) fills the tile cache for the trip area whenever the drawn
   basemap or the plan changes (online only, not on Save-Data / 2G, in the background, at most 400
   requests per run, each URL once): raster tiles and their labels overlay around the center and the
   planned stops; for the vector basemap the tiles of the style's TileJSON over the trip area, zoom 10–14.
 - Install: manifest (`display: standalone`, theme colours light/dark, icons 192/512 + maskable,
-  apple-touch-icon 180). An install button appears when `beforeinstallprompt` fires; iOS gets a one-line
-  "Share → Add to Home Screen" hint.
+  apple-touch-icon 180). "Install app" shows in the map tools whenever the page is not running
+  installed: the browser's own prompt when `beforeinstallprompt` fired, else steps for this browser
+  (`pwa/installOffer.ts` reads the user agent): in-app browsers (Zalo, Facebook, Messenger, Instagram,
+  Line, TikTok…) → open in Safari/Chrome + copy link; iOS (Safari, any browser on 16.4+) → Share → Add
+  to Home Screen; iOS < 16.4 outside Safari → Safari only; Android / desktop Chromium → browser menu;
+  Safari 17+ on macOS → File → Add to Dock; desktop Firefox and older Safari → use Chrome or Edge.
+  "Not now" shrinks the button to its icon for 14 days; the panel footer keeps the same steps.
 
 ## App structure (`web/src/`)
 
@@ -109,16 +136,48 @@ state/store.ts               zustand store: lang, tab, focusDay, selected place,
 i18n/                        labels come from data.labels[lang]; a `useT()` hook
 map/                         imperative Leaflet wrapped in hooks: MapView, basemaps (raster, vector
                              via maplibre-gl-leaflet loaded with dynamic import, Google), markers +
-                             markercluster, routes (road polylines from data.roads), compass, focus;
+                             markercluster, routes (road polylines; legs without a known road are
+                             drawn straight and dashed until routing/ finds one), compass, focus;
                              map/emphasis.ts decides what stays lit: the open day's stops plus the
-                             hovered marker, or with no day open the hovered marker alone (spotlight)
-features/plan/               Plan tab (days, stops, directions links, peek next stop)
+                             hovered marker, or with no day open the hovered marker alone (spotlight);
+                             map/fingerReach.ts: a finger tap that misses every pin, cluster and spot
+                             (empty map or a route line) opens the nearest one within 22 px (44 px
+                             target); drawn shapes keep first claim, mouse clicks are untouched;
+                             map/stopChip.ts: the open day's stop numbers live in their own
+                             click-through pane (620: above markers 600, under tooltips 650), so no
+                             pin or cluster covers them, each at its own marker's top-right
+routing/                     live road geometry for edited plans: legs come from data.roads, then
+                             an IndexedDB cache (`trip-roads-v1`, keyed by OSRM base URL + both
+                             ends at 5 decimals, LRU-pruned at 2,000 legs), then one OSRM request
+                             per changed day (only the stretch with unknown legs, chunked above
+                             100 waypoints, "no route" narrowed by halves). 700 ms debounce after
+                             edits, a newer edit aborts the request of a day it changed, 1 request/s
+                             for the page, nothing offline, 2 s → 60 s backoff after failures.
+                             Uses data.roads_enabled / roads_endpoint / roads_profile; exports
+                             without them get no live routing. The status pill says "Some routes
+                             are approximate" while legs stay straight offline or after failures
+features/plan/               Plan tab (days, stops, directions links); the phone peek row starts at
+                             the next stop by the clock on a dated trip's day ("Next"), otherwise at
+                             #1 of the open Plan day ("Day 1 · #1"), and steps ‹ › (or swipes)
+                             through that day's visits, flying the map to each and lighting its pin;
+                             back to its start after 2 idle min. A dated trip opens on today's day
 features/places/             Places tab (search, filters, list, hide, export preferences)
 features/card/               place card (media, hours, best time, links)
 features/editor/             plan editor: logic/ (pure TS: clock, checks, plan.json; Vitest cases
-                             mirror tests/test_plan_agent.py) and UI; lazy loaded (React.lazy)
-pwa/                         SW registration, update toast, install button, offline status
+                             mirror tests/test_plan_agent.py) and UI; lazy loaded (React.lazy).
+                             Every edit autosaves a draft in this browser. Stops show only an icon
+                             for their checks; the words are in the place card ("Plan notes").
+                             data/planIssues.ts runs the same checks on the plan as shown (generated
+                             or edited) from a lazy chunk (editor/planNotes.ts, loaded when idle),
+                             once per plan and language, for the Plan tab icons and the card
+pwa/                         SW registration, update toast, offline status; install: "Install app"
+                             in the map tools (popover: the browser's prompt or this browser's steps,
+                             "Not now" leaves an icon-only button for 14 days) plus the panel footer
+                             entry; "Installed" toast
 ui/                          small shared components (Button, Segmented, Toast, Sheet, Icon, PlaceStars)
+                             BottomSheet + sheetDrag: phone sheet with detents peek / half / full
+                             (store `sheet`); pointer drag on the compositor, velocity-projected snap
+                             (pure rules in lib/sheetSnap.ts), list hand-off at its top; map tap lowers it
 styles/                      tokens.css (light + dark) + per-feature CSS
 test/                        Vitest setup, fixtures, renderTrip
 ```

@@ -62,8 +62,9 @@ function appHeadLinks(): Plugin {
     name: "trip-app-head",
     transformIndexHtml: () => [
       { tag: "link", attrs: { rel: "manifest", href: "manifest.webmanifest" }, injectTo: "head" },
+      { tag: "link", attrs: { rel: "icon", href: "favicon.svg", type: "image/svg+xml" }, injectTo: "head" },
       { tag: "link", attrs: { rel: "icon", href: "favicon-32.png", sizes: "32x32" }, injectTo: "head" },
-      { tag: "link", attrs: { rel: "apple-touch-icon", href: "apple-touch-icon.png" }, injectTo: "head" },
+      { tag: "link", attrs: { rel: "apple-touch-icon", href: "apple-touch-icon.png", sizes: "180x180" }, injectTo: "head" },
     ],
   };
 }

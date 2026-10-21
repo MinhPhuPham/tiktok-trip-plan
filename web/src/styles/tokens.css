@@ -17,6 +17,7 @@
   --warn-bg: oklch(96% 0.045 85);
   --warn-text: oklch(43% 0.1 65);
   --warn-line: oklch(84% 0.09 80);
+  --err-text: oklch(50% 0.19 27);
   --casing: #ffffff;
   --casing-soft: #ffffff;
   --scrim: oklch(21% 0.012 255 / 0.18);
@@ -69,6 +70,7 @@
     --warn-bg: oklch(29% 0.045 75);
     --warn-text: oklch(86% 0.11 85);
     --warn-line: oklch(42% 0.07 75);
+    --err-text: oklch(72% 0.15 25);
     --casing: oklch(97% 0.004 255);
     --casing-soft: oklch(78% 0.006 255);
     --scrim: oklch(0% 0 0 / 0.4);

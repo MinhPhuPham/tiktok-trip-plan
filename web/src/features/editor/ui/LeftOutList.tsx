@@ -36,7 +36,7 @@ export function LeftOutList({ leftOut, dayCount, groups }: LeftOutListProps) {
               <div className="pe-left-text">
                 <span className="pe-name">{name}</span>
                 <span className="pe-meta">{[meta, why].filter(Boolean).join(" · ")}</span>
-                <IssueList issues={groups.byRef.get(u.ref) ?? []} withWarnings />
+                <IssueList issues={groups.byRef.get(u.ref) ?? []} />
               </div>
               <select
                 className="pe-select-sm"

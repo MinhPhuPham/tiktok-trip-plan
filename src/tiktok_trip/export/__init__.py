@@ -97,7 +97,14 @@ def run(ctx: Context) -> None:
     )
     google_key = google_map_key(ctx)
     write_map(data, paths.map_html, google_key=google_key, extras=extras)
-    write_app(data, paths.app_dir, paths.media_dir, google_key=google_key, extras=extras)
+    write_app(
+        data,
+        paths.app_dir,
+        paths.media_dir,
+        google_key=google_key,
+        extras=extras,
+        site_url=ctx.config.export.site_url,
+    )
     write_mymaps(data, paths.mymaps_dir)
     for labels in LANGUAGES:
         write_trip(data, labels, paths.trip_xlsx(labels.code))

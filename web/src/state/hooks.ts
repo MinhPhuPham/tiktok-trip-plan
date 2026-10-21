@@ -2,7 +2,7 @@ import { use } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { TripStoreContext } from "./context";
-import type { TripActions, TripState, TripStoreApi } from "./store";
+import { selectSheetOpen, type TripActions, type TripState, type TripStoreApi } from "./store";
 
 export { useShallow };
 
@@ -27,7 +27,7 @@ const selectActions = (s: TripState) => s.actions;
 const selectLang = (s: TripState) => s.lang;
 const selectTab = (s: TripState) => s.tab;
 const selectPhone = (s: TripState) => s.phone;
-const selectSheetOpen = (s: TripState) => s.sheetOpen;
+const selectSheet = (s: TripState) => s.sheet;
 const selectFocusDay = (s: TripState) => s.focusDay;
 const selectSelected = (s: TripState) => s.selected;
 const selectOverlays = (s: TripState) => s.overlays;
@@ -42,6 +42,7 @@ export const selectStatus = (s: TripState) => s.status;
 export const useLang = () => useTripStore(selectLang);
 export const useTab = () => useTripStore(selectTab);
 export const usePhone = () => useTripStore(selectPhone);
+export const useSheet = () => useTripStore(selectSheet);
 export const useSheetOpen = () => useTripStore(selectSheetOpen);
 export const useFocusDay = () => useTripStore(selectFocusDay);
 export const useSelectedId = () => useTripStore(selectSelected);

@@ -5,6 +5,7 @@ import json
 import logging
 import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 from fixtures.sample_dataset import CENTER_LABEL, CENTER_LABEL_EN, build_dataset
@@ -20,6 +21,8 @@ from tiktok_trip.export.map_data import (
     BASEMAPS,
     GOOGLE_MAPS_JS,
     MAP_SCHEMA_VERSION,
+    ROUTING_HOSTS,
+    TILE_HOSTS,
     MapExtras,
     build_map_data,
 )
@@ -38,6 +41,7 @@ from tiktok_trip.planning.matrix import TravelMatrix
 from tiktok_trip.preferences import Preferences
 
 FAKE_KEY = "AIzaFAKE-test-key-0123456789"
+PWA_CONSTANTS = Path(__file__).resolve().parents[1] / "web" / "src" / "pwa" / "constants.ts"
 MAX_BYTES = 16 * 1024 * 1024
 DATA_SCRIPT = re.compile(
     r'<script id="trip-data" type="application/json">(?P<json>.*?)</script>', re.DOTALL
@@ -157,6 +161,32 @@ def test_data_carries_road_legs(data: ExportData) -> None:
     payload = json.loads(build_map_data(data, extras=MapExtras(roads=roads)).model_dump_json())
     assert payload["roads"] == roads
     assert build_map_data(data).roads == {}
+
+
+def test_data_carries_the_routing_server_for_the_travel_mode(data: ExportData) -> None:
+    data.config.travel.mode = "walking"
+    data.config.roads.enabled = True
+    payload = json.loads(build_map_data(data).model_dump_json())
+    assert payload["roads_enabled"] is True
+    assert payload["roads_endpoint"] == "https://routing.openstreetmap.de"
+    assert payload["roads_profile"] == "routed-foot"
+    data.config.roads.enabled = False
+    assert build_map_data(data).roads_enabled is False
+
+
+def test_default_routing_host_is_cached_by_the_service_worker(data: ExportData) -> None:
+    host = urlsplit(build_map_data(data).roads_endpoint).hostname
+    assert host in ROUTING_HOSTS
+
+
+@pytest.mark.parametrize(
+    ("name", "hosts"), [("TILE_HOSTS", TILE_HOSTS), ("ROUTING_HOSTS", ROUTING_HOSTS)]
+)
+def test_service_worker_host_lists_mirror_python(name: str, hosts: tuple[str, ...]) -> None:
+    source = PWA_CONSTANTS.read_text(encoding="utf-8")
+    match = re.search(rf"export const {name}: readonly string\[\] = \[([^\]]*)\]", source)
+    assert match, f"{name} not found in {PWA_CONSTANTS.name}"
+    assert tuple(re.findall(r'"([^"]+)"', match.group(1))) == hosts
 
 
 def test_google_needs_the_basemap_listed(data: ExportData) -> None:
@@ -315,9 +345,12 @@ def make_media(tmp_path: Path) -> tuple[Path, MapExtras]:
 def test_map_fills_title_and_data(data: ExportData, tmp_path: Path) -> None:
     data.config.city = "Đà <Lạt> & co"
     html = write_map(data, tmp_path / "map.html").read_text(encoding="utf-8")
-    assert "<title>Đà &lt;Lạt&gt; &amp; co · trip map</title>" in html
-    assert "__TRIP_DATA__" not in html
-    assert "__TRIP_TITLE__" not in html
+    assert "<title>TwLP-Trips</title>" in html
+    assert '<meta name="description" content="Đà &lt;Lạt&gt; &amp; co: lịch trình' in html
+    assert "og:url" not in html
+    assert "og:image" not in html
+    for marker in ("__TRIP_DATA__", "__TRIP_TITLE__", "__SEO_HEAD__"):
+        assert marker not in html
     assert embedded(html)["city"] == "Đà <Lạt> & co"
 
 
@@ -357,17 +390,22 @@ def test_app_is_the_dist_copy_plus_trip_manifest_media_and_offline(
         "manifest.webmanifest",
         "trip.json",
         "offline.json",
+        "og-image.png",
+        "robots.txt",
         "media/gp_pho1/frame-v1-001.jpg",
         "media/gp_pho1/google-1.jpg",
     }
     index = (app_dir / "index.html").read_text(encoding="utf-8")
     assert "__TRIP_DATA__" in index
+    assert "<title>TwLP-Trips</title>" in index
+    assert "__SEO_HEAD__" not in index
     trip = json.loads((app_dir / "trip.json").read_bytes())
     assert trip["city"] == 'Đà "Lạt"'
     assert trip["schema_version"] == MAP_SCHEMA_VERSION
     manifest = json.loads((app_dir / "manifest.webmanifest").read_text(encoding="utf-8"))
-    assert manifest["name"] == 'Đà "Lạt" trip map'
-    assert manifest["short_name"] == 'Đà "Lạt"'
+    assert manifest["name"] == f'TwLP-Trips {EN_DASH} Đà "Lạt"'
+    assert manifest["short_name"] == "TwLP-Trips"
+    assert manifest["description"].startswith('Đà "Lạt": lịch trình')
     offline = json.loads((app_dir / "offline.json").read_text(encoding="utf-8"))
     assert offline["urls"] == [
         "trip.json",
