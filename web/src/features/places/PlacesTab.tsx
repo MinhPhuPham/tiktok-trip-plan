@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { DOM_IDS, focusById } from "../../app/ids";
-import { useListedPlaces, useTripModel } from "../../data/hooks";
+import { useListedPlaces, useRanked, useTripModel } from "../../data/hooks";
 import { filtersActive } from "../../data/filters";
 import { useT } from "../../i18n/useT";
 import type { Translator } from "../../i18n/translator";
@@ -17,7 +17,6 @@ import { useStickySearch } from "./useStickySearch";
 import "./places.css";
 
 const selectShowHidden = (s: TripState) => s.showHidden;
-const selectRanked = (s: TripState) => s.filters.intents.size > 0;
 
 /** Reset clears every filter; its button disappears, so focus moves to the search box. */
 function useResetFilters(): () => void {
@@ -31,7 +30,7 @@ function useResetFilters(): () => void {
 export function PlacesTab() {
   const t = useT();
   const places = useListedPlaces();
-  const ranked = useTripStore(selectRanked);
+  const ranked = useRanked();
   const rowHover = useRowHover();
   const { box, searchMark, resultsMark, revealResults } = useStickySearch();
   return (

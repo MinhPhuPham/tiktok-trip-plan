@@ -4,7 +4,7 @@ import { buildTripModel } from "../../data/model";
 import { peekStart } from "../../data/stops";
 import { planFromData, type TripData } from "../../data/types";
 import { makeDay, makeStop, threeVisitTrip } from "../../test/fixtures";
-import { neighbour, peekView, stepPeek, swipeStep } from "./peekCursor";
+import { neighbour, peekView, stepPeek } from "./peekCursor";
 
 const TODAY = "2026-10-21";
 const at = (hour: number, minute = 0) => new Date(2026, 9, 21, hour, minute);
@@ -107,13 +107,5 @@ describe("peek cursor", () => {
     const later = peekStart(model, plan, 1, at(11, 40));
     expect(later?.stop.ref).toBe("n1");
     expect(peekView(later!, back)).toMatchObject({ index: 2, isNext: true, browsing: false });
-  });
-
-  it("a swipe is horizontal, dominant and at least 40 px", () => {
-    expect(swipeStep(-40, 0)).toBe(1);
-    expect(swipeStep(55, 10)).toBe(-1);
-    expect(swipeStep(-39, 0)).toBeNull();
-    expect(swipeStep(-60, 60)).toBeNull();
-    expect(swipeStep(10, -80)).toBeNull();
   });
 });

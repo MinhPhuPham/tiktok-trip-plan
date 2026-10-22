@@ -18,9 +18,13 @@ interface BottomSheetProps {
   /** id of the body the handle controls. */
   bodyId: string;
   handleId?: string;
+  /** id of the heading that names the panel. */
+  labelId?: string;
   id?: string;
   className?: string;
-  /** Shown while collapsed (the "Next stop" row); fades out as the header fades in. */
+  /** Rendered first and never inert (a phone's screen-reader-only heading). */
+  title?: ReactNode;
+  /** Shown while collapsed (the open tab's peek row); fades out as the head fades in. */
   peek?: ReactNode;
   /** Header and tabs: inert while collapsed. */
   head: ReactNode;
@@ -43,8 +47,10 @@ export function BottomSheet({
   status,
   bodyId,
   handleId,
+  labelId,
   id,
   className,
+  title,
   peek,
   head,
   children,
@@ -103,7 +109,8 @@ export function BottomSheet({
   };
 
   return (
-    <aside ref={panel} id={id} className={classes("panel", className)} data-sheet={phone ? detent : undefined}>
+    <aside ref={panel} id={id} className={classes("panel", className)} aria-labelledby={labelId} data-sheet={phone ? detent : undefined}>
+      {title}
       <button
         ref={handle}
         id={handleId}

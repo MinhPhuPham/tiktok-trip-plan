@@ -4,7 +4,8 @@ import { selectSheetOpen } from "../../state/store";
 import { makeDay, makeStop, makeTrip, threeVisitTrip } from "../../test/fixtures";
 import { renderTrip } from "../../test/renderTrip";
 import type { TripData } from "../../data/types";
-import { PEEK_IDLE_RESET_MS, PeekNext } from "./PeekNext";
+import { PEEK_IDLE_RESET_MS } from "../../app/usePeekFocus";
+import { PeekNext } from "./PeekNext";
 
 const withLegs = (data: TripData): TripData => {
   data.labels.en!.ui.leg = "{n} min";
@@ -26,7 +27,7 @@ const undated = () => {
   return data;
 };
 
-const peekMain = () => document.getElementById("peekNext")!;
+const peekMain = () => document.getElementById("peekMain")!;
 const prev = () => screen.getByRole("button", { name: /^Previous stop/ });
 const next = () => screen.getByRole("button", { name: /^Next stop/ });
 

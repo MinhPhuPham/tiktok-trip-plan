@@ -1,7 +1,8 @@
 import { use, useMemo } from "react";
 import { selectPlan, useTripStore, useShallow } from "../state/hooks";
+import type { TripState } from "../state/store";
 import { TripModelContext } from "./context";
-import { intentCounts, listedPlaces } from "./filters";
+import { intentCounts, listedPlaces, shownOrder } from "./filters";
 import type { IntentId } from "./intents";
 import type { TripModel } from "./model";
 import { normalizePlan } from "./plan";
@@ -40,6 +41,18 @@ export function useListedPlaces(): MapPlace[] {
   const plan = useTripPlan();
   const input = useListInput();
   return useMemo(() => listedPlaces(model, plan, input), [model, plan, input]);
+}
+
+const selectRanked = (s: TripState) => s.filters.intents.size > 0;
+
+/** Whether the Places list is ranked by "Good for" relevance (one list) rather than must-go first. */
+export const useRanked = () => useTripStore(selectRanked);
+
+/** The Places tab rows in the order the list shows them. */
+export function useShownPlaces(): readonly MapPlace[] {
+  const places = useListedPlaces();
+  const ranked = useRanked();
+  return useMemo(() => shownOrder(places, ranked), [places, ranked]);
 }
 
 /** How many places each "Good for" intent would list with the other filters as they are. */

@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { swipeStep, type Step } from "./peekCursor";
+import { swipeStep, type Step } from "../lib/swipe";
 
 /** A click this soon after a swipe is the swipe's own click, not a tap. */
 const CLICK_AFTER_SWIPE_MS = 500;

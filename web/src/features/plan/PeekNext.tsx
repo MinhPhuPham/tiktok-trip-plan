@@ -1,19 +1,15 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useState } from "react";
 import { DOM_IDS } from "../../app/ids";
+import { usePeekFocus } from "../../app/usePeekFocus";
 import { useNow } from "../../app/useNow";
 import { useTripModel, useTripPlan } from "../../data/hooks";
 import { arriveMin, peekStart, stopName, stopTargetId, type PeekStart } from "../../data/stops";
 import { useT } from "../../i18n/useT";
 import { cssVars } from "../../lib/css";
-import { useFocusDay, usePhone, useSheetOpen, useTripActions, useTripStoreApi } from "../../state/hooks";
-import { Icon } from "../../ui/Icon";
-import { neighbour, peekView, stepPeek, type PeekBrowse, type Step } from "./peekCursor";
-import { useSwipeStep } from "./useSwipeStep";
-
-/** Left alone this long, the peek row goes back to where it starts (the next stop, or the open day's #1). */
-export const PEEK_IDLE_RESET_MS = 120_000;
-
-const STEP_KEYS: Readonly<Record<string, Step>> = { ArrowLeft: -1, ArrowRight: 1 };
+import type { Step } from "../../lib/swipe";
+import { useFocusDay, usePhone, useSheetOpen, useTripActions } from "../../state/hooks";
+import { PeekSteps, usePeekStepping } from "../../ui/PeekSteps";
+import { neighbour, peekView, stepPeek, type PeekBrowse } from "./peekCursor";
 
 /**
  * The collapsed phone sheet's stop row with ‹ › through that day's stops; nothing on desktop. On a
@@ -35,43 +31,22 @@ function PeekNextRow() {
 function PeekStepper({ start }: { start: PeekStart }) {
   const t = useT();
   const model = useTripModel();
-  const store = useTripStoreApi();
-  const { openCard, requestMap } = useTripActions();
+  const { openCard } = useTripActions();
   const sheetOpen = useSheetOpen();
   const [browse, setBrowse] = useState<PeekBrowse | null>(null);
   if (browse && (sheetOpen || browse.base !== start.stop)) setBrowse(null);
 
   const view = peekView(start, browse);
-  const focusId = view.browsing ? stopTargetId(model, view.stop) : null;
-
-  /* The browsed stop's pin lights like a hovered list row's; idle, the row returns to its start. */
-  useEffect(() => {
-    if (!focusId) return undefined;
-    store.getState().actions.setHovered(focusId);
-    const idle = window.setTimeout(() => setBrowse(null), PEEK_IDLE_RESET_MS);
-    return () => {
-      window.clearTimeout(idle);
-      const { hovered, actions } = store.getState();
-      if (hovered === focusId) actions.setHovered(null);
-    };
-  }, [focusId, store]);
+  const show = usePeekFocus(view.browsing ? stopTargetId(model, view.stop) : null, () => setBrowse(null));
 
   const step = (delta: Step) => {
     const target = neighbour(view, delta);
     const moved = stepPeek(view, start, delta);
     if (!target || !moved) return;
     setBrowse(moved);
-    const id = stopTargetId(model, target);
-    if (store.getState().selected) openCard(id);
-    else requestMap({ type: "fly", id });
+    show(stopTargetId(model, target));
   };
-  const swipe = useSwipeStep(step);
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const delta = STEP_KEYS[event.key];
-    if (delta == null || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-    event.preventDefault();
-    step(delta);
-  };
+  const stepping = usePeekStepping(step);
 
   const { day, stop, isNext, legMinutes } = view;
   const time = t.time(arriveMin(stop));
@@ -87,9 +62,9 @@ function PeekStepper({ start }: { start: PeekStart }) {
   };
 
   return (
-    <div className="peek" onKeyDown={onKeyDown} {...swipe}>
+    <div className="peek" {...stepping}>
       <button
-        id={DOM_IDS.peekNext}
+        id={DOM_IDS.peekMain}
         className="peek-main"
         type="button"
         title={[lead, time, name].filter(Boolean).join(" ")}
@@ -110,20 +85,7 @@ function PeekStepper({ start }: { start: PeekStart }) {
           <span className="peek-name">{name}</span>
         </span>
       </button>
-      <div className="peek-steps">
-        {([-1, 1] as const).map((delta) => (
-          <button
-            key={delta}
-            type="button"
-            className="peek-step"
-            aria-label={stepLabel(delta)}
-            aria-disabled={!neighbour(view, delta) || undefined}
-            onClick={() => step(delta)}
-          >
-            <Icon name={delta < 0 ? "chevron-left" : "chevron-right"} />
-          </button>
-        ))}
-      </div>
+      <PeekSteps label={stepLabel} enabled={(delta) => neighbour(view, delta) != null} onStep={step} />
       <span className="sr-only" role="status">
         {view.browsing ? `${lead} ${meta} ${name}` : ""}
       </span>

@@ -123,7 +123,7 @@ function restoreFocus(store: TripStoreApi, back: HTMLElement | null): void {
   if (back?.isConnected && !back.closest("[inert]")) {
     back.focus({ preventScroll: true });
   } else if (store.getState().phone) {
-    if (!focused(DOM_IDS.peekNext)) focusById(DOM_IDS.sheetToggle);
+    if (!focused(DOM_IDS.peekMain)) focusById(DOM_IDS.sheetToggle);
   } else {
     focusById(DOM_IDS.map);
   }

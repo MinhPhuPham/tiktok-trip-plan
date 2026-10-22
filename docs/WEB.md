@@ -232,7 +232,12 @@ features/plan/               Plan tab (days, stops, directions links); the phone
                              #1 of the open Plan day ("Day 1 · #1"), and steps ‹ › (or swipes)
                              through that day's visits, flying the map to each and lighting its pin;
                              back to its start after 2 idle min. A dated trip opens on today's day
-features/places/             Places tab (search, filters, list, hide, export preferences). Filters are one
+features/places/             Places tab (search, filters, list, hide, export preferences). Its phone peek
+                             row (PlacesPeek) names the list ("Ăn sáng · 26", "Tất cả · 4/186" while
+                             browsing), has a search button (sheet full, search focused in the same tap)
+                             and steps ‹ › through the list as shown (data/filters.ts shownOrder), lighting
+                             and flying to each place like the Plan peek; a filter change starts over at the
+                             first place; no result → "Không có nơi nào khớp" + Clear filters. Filters are one
                              grid of dropdowns: day (with place counts), "Good for" (multi-select of the
                              traveller intents in data/intents.ts, matching any; popover, a bottom panel on
                              phones), priority, category. They also hide pins on the map while the tab shows,
@@ -250,7 +255,9 @@ pwa/                         SW registration, update toast, offline status; inst
                              "Not now" leaves an icon-only button for 14 days) plus the panel footer
                              entry; "Installed" toast
 ui/                          small shared components (Button, Segmented, Toast, Sheet, Icon, PlaceStars)
-                             BottomSheet + sheetDrag: phone sheet with detents peek / half / full
+                             BottomSheet + sheetDrag: phone sheet with detents peek / half / full; its peek
+                             row follows the tab (Panel); on phones the head is the tabs alone (the city
+                             title block is desktop only, an sr-only h1 names the sheet)
                              (store `sheet`); pointer drag on the compositor, velocity-projected snap
                              (pure rules in lib/sheetSnap.ts), list hand-off at its top; map tap lowers it
 styles/                      tokens.css (light + dark) + per-feature CSS

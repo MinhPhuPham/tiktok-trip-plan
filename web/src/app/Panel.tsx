@@ -1,21 +1,26 @@
 import { Activity } from "react";
 import { PeekNext } from "../features/plan/PeekNext";
 import { PlanTab } from "../features/plan/PlanTab";
+import { PlacesPeek } from "../features/places/PlacesPeek";
 import { PlacesTab } from "../features/places/PlacesTab";
 import { useT } from "../i18n/useT";
 import { usePhone, useSheet, useTab, useTripActions } from "../state/hooks";
 import { BottomSheet } from "../ui/BottomSheet";
 import { DOM_IDS } from "./ids";
 import { PanelFooter } from "./PanelFooter";
-import { PanelHeader } from "./PanelHeader";
+import { PanelHeader, PanelTitle } from "./PanelHeader";
 import { PanelTabs } from "./PanelTabs";
 
-const head = (
+const deskHead = (
   <>
     <PanelHeader />
     <PanelTabs />
   </>
 );
+const phoneHead = <PanelTabs />;
+const phoneTitle = <PanelTitle />;
+const planPeek = <PeekNext />;
+const placesPeek = <PlacesPeek />;
 
 export function Panel() {
   const t = useT();
@@ -29,14 +34,16 @@ export function Panel() {
       id={DOM_IDS.panel}
       handleId={DOM_IDS.sheetToggle}
       bodyId={DOM_IDS.panelBody}
+      labelId={DOM_IDS.panelTitle}
       phone={phone}
       detent={detent}
       onDetentChange={setSheet}
       onToggle={toggleSheet}
       toggleLabel={toggleLabel}
       status={t.t(`sheet_${detent}`)}
-      peek={<PeekNext />}
-      head={head}
+      title={phone ? phoneTitle : null}
+      peek={tab === "plan" ? planPeek : placesPeek}
+      head={phone ? phoneHead : deskHead}
     >
       <Activity mode={tab === "plan" ? "visible" : "hidden"}>
         <section role="tabpanel" id={DOM_IDS.viewPlan} aria-labelledby={DOM_IDS.tabPlan}>

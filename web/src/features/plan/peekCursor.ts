@@ -1,7 +1,6 @@
 import { dayVisits, legMinutesTo, type PeekStart } from "../../data/stops";
 import type { TripDay, TripStop } from "../../data/types";
-
-export type Step = -1 | 1;
+import type { Step } from "../../lib/swipe";
 
 /**
  * Where the peek row's arrows moved to among the visits of the start stop's day. It belongs to the
@@ -50,12 +49,4 @@ export const neighbour = (view: PeekView, step: Step): TripStop | null => view.v
 
 export function stepPeek(view: PeekView, start: PeekStart, step: Step): PeekBrowse | null {
   return neighbour(view, step) ? { base: start.stop, index: view.index + step, step } : null;
-}
-
-export const SWIPE_MIN_PX = 40;
-
-/** A horizontal swipe of at least `min` pixels: left steps to the next visit, right to the previous. */
-export function swipeStep(dx: number, dy: number, min: number = SWIPE_MIN_PX): Step | null {
-  if (Math.abs(dx) < min || Math.abs(dx) <= Math.abs(dy)) return null;
-  return dx < 0 ? 1 : -1;
 }

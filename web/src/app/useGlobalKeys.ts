@@ -3,6 +3,7 @@ import { isTypingTarget } from "../lib/dom";
 import { useTripStoreApi } from "../state/hooks";
 import { selectSheetOpen } from "../state/store";
 import { DOM_IDS, focusById } from "./ids";
+import { openPlaceSearch } from "./openSearch";
 
 const hasText = (node: Element | null): boolean =>
   (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) && node.value !== "";
@@ -34,9 +35,7 @@ export function useGlobalKeys(): void {
       const plainSlash = event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing;
       if (!plainSlash || isTypingTarget(document.activeElement) || dialogOpen) return;
       event.preventDefault();
-      actions.setTab("places");
-      if (phone) actions.setSheet("full");
-      requestAnimationFrame(() => focusById(DOM_IDS.search));
+      openPlaceSearch(store);
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);

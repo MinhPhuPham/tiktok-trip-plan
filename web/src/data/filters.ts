@@ -65,6 +65,19 @@ export function listedPlaces(model: TripModel, plan: TripPlan, input: ListInput)
   return intents.size ? rankByIntents(listed, intents, intentIndex(model), plan) : listed;
 }
 
+/** Must-go places and the rest, each in the given order. */
+export function splitMustGo(places: readonly MapPlace[]): { must: MapPlace[]; rest: MapPlace[] } {
+  const must = places.filter((p) => p.priority === "must");
+  return { must, rest: must.length ? places.filter((p) => p.priority !== "must") : [...places] };
+}
+
+/** The Places list in the order it shows: must-go first, unless ranked by the chosen intents. */
+export function shownOrder(places: readonly MapPlace[], ranked: boolean): readonly MapPlace[] {
+  if (ranked) return places;
+  const { must, rest } = splitMustGo(places);
+  return must.length ? [...must, ...rest] : places;
+}
+
 /** Places per available intent among the pool the other filters leave, so no offered intent lists nothing. */
 export function intentCounts(model: TripModel, plan: TripPlan, input: ListInput): Map<IntentId, number> {
   const pool = model.places.filter((place) => inPool(input, place) && matchesChoices(model, plan, place, input.filters));

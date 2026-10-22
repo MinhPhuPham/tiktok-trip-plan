@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { useToggleHidden } from "../../app/useToggleHidden";
 import { useTripModel, useTripPlan } from "../../data/hooks";
+import { splitMustGo } from "../../data/filters";
 import { dayColorOf } from "../../data/plan";
 import type { MapPlace } from "../../data/types";
 import type { Translator } from "../../i18n/translator";
@@ -18,9 +19,8 @@ interface PlaceListProps {
 /** Must-go places first under their own heading, then the rest; or one list in the given order. */
 export function PlaceList({ t, places, grouped = true }: PlaceListProps) {
   if (!grouped) return <PlaceGroup t={t} places={places} />;
-  const must = places.filter((p) => p.priority === "must");
-  const rest = must.length ? places.filter((p) => p.priority !== "must") : places;
-  if (!must.length) return <PlaceGroup t={t} places={rest} />;
+  const { must, rest } = splitMustGo(places);
+  if (!must.length) return <PlaceGroup t={t} places={places} />;
   return (
     <>
       <PlaceGroup t={t} places={must} title={t.t("must_go")} must />
