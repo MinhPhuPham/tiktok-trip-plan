@@ -4,28 +4,25 @@ import { useT } from "../i18n/useT";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
 import type { IconName } from "../ui/IconSprite";
-import type { InstallHelp } from "./installOffer";
+import { shareSteps, type BrowserInfo, type InstallHelp } from "./installOffer";
 import "./install.css";
 
 interface InstallStepsProps {
   help: InstallHelp;
-  ios: boolean;
+  browser: BrowserInfo;
 }
 
 /** How to install in this browser when it has no install prompt of its own. */
-export function InstallSteps({ help, ios }: InstallStepsProps) {
+export function InstallSteps({ help, browser: info }: InstallStepsProps) {
   const t = useT();
-  const browser = ios ? "Safari" : "Chrome";
+  const browser = info.ios ? "Safari" : "Chrome";
   switch (help) {
     case "share":
       return (
         <ol className="install-steps">
-          <li>
-            <IconText t={t} text="install_ios_share" icon="share" />
-          </li>
-          <li>
-            <IconText t={t} text="install_ios_add" icon="plus-square" />
-          </li>
+          {shareSteps(info).map(({ text, icon }) => (
+            <li key={text}>{icon ? <IconText t={t} text={text} icon={icon} /> : t.t(text)}</li>
+          ))}
         </ol>
       );
     case "menu":

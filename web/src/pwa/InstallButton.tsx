@@ -19,7 +19,7 @@ export function InstallButton() {
     <details className="about install-help">
       <summary>{t.t("install_app")}</summary>
       <p className="foot-hint">{t.t("install_why")}</p>
-      <InstallSteps help={install.kind} ios={install.ios} />
+      <InstallSteps help={install.kind} browser={install.browser} />
     </details>
   );
 }

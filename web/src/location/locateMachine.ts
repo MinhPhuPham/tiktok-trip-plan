@@ -10,10 +10,18 @@
  */
 export type LocateMode = "off" | "locating" | "showing" | "following" | "denied" | "failed";
 
+/**
+ * Why "denied" or "failed": blocked = refused with no prompt (an app or site setting says no, or the
+ * permission was already denied), refused = "Don't allow" on the prompt, off = no position at all
+ * (Location Services off), timeout = no fix in time.
+ */
+export type LocateProblem = "blocked" | "refused" | "off" | "timeout";
+
 export interface LocateState {
   mode: LocateMode;
   /** Centre and follow on the first fix: the user asked (a tap), not the silent start on load. */
   follow: boolean;
+  problem?: LocateProblem;
 }
 
 export type LocateEvent =
@@ -21,8 +29,8 @@ export type LocateEvent =
   | { type: "retry" }
   | { type: "granted" }
   | { type: "fix" }
-  | { type: "denied" }
-  | { type: "failed" }
+  | { type: "denied"; problem?: "blocked" | "refused" }
+  | { type: "failed"; problem?: "off" | "timeout" }
   | { type: "pan" }
   | { type: "reset" };
 
@@ -57,10 +65,10 @@ export function locateStep(state: LocateState, event: LocateEvent): LocateState 
     case "fix":
       return state.mode === "locating" ? { mode: state.follow ? "following" : "showing", follow: state.follow } : state;
     case "denied":
-      return state.mode === "denied" ? state : { mode: "denied", follow: false };
+      return state.mode === "denied" ? state : { mode: "denied", follow: false, problem: event.problem ?? "blocked" };
     case "failed":
       if (state.mode !== "locating") return state;
-      return state.follow ? { mode: "failed", follow: false } : LOCATE_OFF;
+      return state.follow ? { mode: "failed", follow: false, problem: event.problem ?? "timeout" } : LOCATE_OFF;
     case "pan":
       if (state.mode === "following") return { mode: "showing", follow: false };
       return state.mode === "locating" && state.follow ? LOCATE_SILENT : state;

@@ -54,6 +54,15 @@ describe("locateStep", () => {
     expect(run(["granted", "failed"])).toEqual(LOCATE_OFF);
   });
 
+  it("denied and failed keep why: no prompt, refused prompt, no position or timeout", () => {
+    const asked = run(["tap"]);
+    expect(locateStep(asked, { type: "denied" })).toEqual({ mode: "denied", follow: false, problem: "blocked" });
+    expect(locateStep(asked, { type: "denied", problem: "refused" }).problem).toBe("refused");
+    expect(locateStep(asked, { type: "failed" })).toEqual({ mode: "failed", follow: false, problem: "timeout" });
+    expect(locateStep(asked, { type: "failed", problem: "off" }).problem).toBe("off");
+    expect(run(["retry"], locateStep(asked, { type: "failed", problem: "off" }))).toEqual({ mode: "locating", follow: true });
+  });
+
   it("errors after a fix keep the dot", () => {
     expect(run(["tap", "fix", "failed"]).mode).toBe("following");
   });

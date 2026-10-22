@@ -95,7 +95,7 @@ function InstallToolButton({ install, compact, snooze }: InstallToolButtonProps)
       >
         <h2 id={TITLE_ID}>{t.t("install_title")}</h2>
         <p>{t.t("install_why")}</p>
-        {install.kind === "prompt" ? null : <InstallSteps help={install.kind} ios={install.ios} />}
+        {install.kind === "prompt" ? null : <InstallSteps help={install.kind} browser={install.browser} />}
         <div className="install-actions">
           {compact ? null : (
             <Button variant="ghost" onClick={notNow}>

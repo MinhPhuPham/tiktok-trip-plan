@@ -29,6 +29,7 @@ from tiktok_trip.export.site import (
     manifest_name,
     page_url,
 )
+from tiktok_trip.export.splash import write_splash_screens
 
 logger = logging.getLogger(__name__)
 
@@ -129,10 +130,12 @@ def image_url(site_url: str, image: bytes) -> str:
     return relative
 
 
-def render_app_index(facts: TripFacts, site_url: str, image: bytes) -> str:
-    """web_dist/app/index.html with the title and the SEO block; the trip data stays a fetch."""
+def render_app_index(facts: TripFacts, site_url: str, image: bytes, splash: str = "") -> str:
+    """web_dist/app/index.html with the title, the SEO block and the iPhone launch screens; the
+    trip data stays a fetch."""
     page = dist_text("app/index.html", (TITLE_MARKER, SEO_MARKER))
-    return fill_head(page, head_tags(facts, site_url, image_url(site_url, image)))
+    head = head_tags(facts, site_url, image_url(site_url, image))
+    return fill_head(page, f"{head}\n{splash}" if splash else head)
 
 
 def write_map(
@@ -200,15 +203,16 @@ def write_app(
     site_url: str = "",
 ) -> Path:
     """Write output/app/: web_dist/app with its head filled + trip.json, manifest, media/,
-    offline.json, the preview image and robots.txt."""
+    offline.json, the preview image, the iPhone launch screens and robots.txt."""
     map_data = build_map_data(data, google_loader_url(google_key) if google_key else None, extras)
     dist = web_dist() / "app"
     facts = trip_facts(map_data)
     manifest = manifest_json(facts)
     image = render_og_image(SITE_NAME, facts.city, facts.stats, dist / APP_ICON)
-    index = render_app_index(facts, site_url, image)
     clear_app_dir(app_dir)
     shutil.copytree(dist, app_dir, dirs_exist_ok=True)
+    splash = write_splash_screens(app_dir, dist / APP_ICON)
+    index = render_app_index(facts, site_url, image, splash)
     (app_dir / "index.html").write_text(index, encoding="utf-8")
     trip = map_data.model_dump_json(by_alias=True).encode("utf-8")
     (app_dir / "trip.json").write_bytes(trip)

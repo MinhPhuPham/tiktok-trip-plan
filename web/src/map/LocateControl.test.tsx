@@ -22,6 +22,9 @@ function setup(lang = "en", unavailable: GeoUnavailable | null = null) {
   return { element, store: view.store, button, cleanup };
 }
 
+const IOS_CHROME_UA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/138.0.7204.156 Mobile/15E148 Safari/604.1";
+
 const ZALO_UA =
   "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36 Zalo android/12100658";
 
@@ -55,6 +58,43 @@ describe("LocateControl", () => {
     act(() => view.store.getState().actions.locate({ type: "denied" }));
     expect(screen.getByRole("dialog", { name: "Vị trí đang bị chặn" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Thử lại" })).toBeInTheDocument();
+  });
+
+  it("iPhone Chrome refusing at once (no prompt): opens the help with Chrome's own location switch", () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(IOS_CHROME_UA);
+    const view = setup("vi");
+    cleanup = view.cleanup;
+    fireEvent.click(view.button());
+    act(() => view.store.getState().actions.locate({ type: "denied", problem: "blocked" }));
+    const dialog = screen.getByRole("dialog", { name: "Vị trí đang bị chặn" });
+    expect(dialog).toHaveTextContent("iPhone chưa cho Chrome dùng vị trí, nên trang này không hỏi được bạn.");
+    expect(dialog).toHaveTextContent("Mở Cài đặt → Ứng dụng → Chrome → Vị trí.");
+    expect(dialog).toHaveTextContent("Chọn Khi dùng ứng dụng và bật Vị trí chính xác.");
+    expect(dialog).not.toHaveTextContent("Safari");
+    expect(within(dialog).getByRole("button", { name: "Thử lại" })).toBeInTheDocument();
+  });
+
+  it("no position after a tap (Location Services off) opens the Location Services help; a tap on the button retries", () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(IOS_CHROME_UA);
+    const view = setup("vi");
+    cleanup = view.cleanup;
+    fireEvent.click(view.button());
+    act(() => view.store.getState().actions.locate({ type: "failed", problem: "off" }));
+    const dialog = screen.getByRole("dialog", { name: "Chưa lấy được vị trí" });
+    expect(dialog).toHaveTextContent("Quyền riêng tư & Bảo mật → Dịch vụ định vị");
+    expect(dialog).toHaveTextContent("Ngay bên dưới, chọn Chrome → Khi dùng ứng dụng.");
+    expect(view.button()).toHaveAttribute("data-mode", "failed");
+    fireEvent.click(view.button());
+    expect(view.store.getState().locate).toEqual({ mode: "locating", follow: true });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("a timeout opens no help (the toast offers Try again)", () => {
+    const view = setup();
+    cleanup = view.cleanup;
+    fireEvent.click(view.button());
+    act(() => view.store.getState().actions.locate({ type: "failed", problem: "timeout" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("does not open the help for a permission that was already blocked on load", () => {

@@ -75,7 +75,8 @@ The trip map is a React + TypeScript app in `web/`; it replaced the earlier hand
 
 `output/app/` = copy of `web_dist/app/` with `index.html` filled (title + SEO block) + `trip.json` +
 filled `manifest.webmanifest` + `og-image.png` (1200×630 preview card, `export/og_image.py`, Pillow,
-system font with Vietnamese diacritics or Pillow's default) + `robots.txt` + `media/` (copy of
+system font with Vietnamese diacritics or Pillow's default) + `splash/` (iPhone launch screens, linked in
+the head) + `robots.txt` + `media/` (copy of
 `output/media/`) + `offline.json`:
 
 ```json
@@ -108,13 +109,23 @@ system font with Vietnamese diacritics or Pillow's default) + `robots.txt` + `me
   basemap or the plan changes (online only, not on Save-Data / 2G, in the background, at most 400
   requests per run, each URL once): raster tiles and their labels overlay around the center and the
   planned stops; for the vector basemap the tiles of the style's TileJSON over the trip area, zoom 10–14.
-- Install: manifest (`display: standalone`, theme colours light/dark, icons 192/512 + maskable,
-  apple-touch-icon 180). "Install app" shows in the map tools whenever the page is not running
-  installed: the browser's own prompt when `beforeinstallprompt` fired, else steps for this browser
-  (`pwa/installOffer.ts` reads the user agent): in-app browsers (Zalo, Facebook, Messenger, Instagram,
-  Line, TikTok…) → open in Safari/Chrome + copy link; iOS (Safari, any browser on 16.4+) → Share → Add
-  to Home Screen; iOS < 16.4 outside Safari → Safari only; Android / desktop Chromium → browser menu;
-  Safari 17+ on macOS → File → Add to Dock; desktop Firefox and older Safari → use Chrome or Edge.
+- Install: manifest (`id`/`start_url`/`scope` `./`, `display: standalone`, `orientation: any`,
+  `categories`, theme colours light/dark, icons 192/512 + maskable, apple-touch-icon 180). iOS:
+  `apple-mobile-web-app-status-bar-style` `default` (the page starts below the status bar, coloured by
+  `theme-color`); the top tools, popovers and Leaflet corners still add `env(safe-area-inset-*)` for the
+  landscape notch (`viewport-fit=cover`). The export (`export/splash.py`, Pillow) writes
+  `splash/apple-splash-WxH.png` for 11 portrait iPhone screens (the icon on `#16181d`) and links them as
+  `apple-touch-startup-image`; they are not precached (iOS fetches them when the app is added).
+  "Install app" shows in the map tools whenever the page is not running installed: the browser's own
+  prompt when `beforeinstallprompt` fired (never on iOS), else steps for this browser
+  (`pwa/installOffer.ts` reads the user agent; an iPad desktop UA with touch counts as iOS): in-app
+  browsers (Zalo, Facebook, Messenger, Instagram, Line, TikTok…) → open in Safari/Chrome + copy link;
+  iOS → Share → Add to Home Screen → Add, with Share where that app keeps it (`shareSteps`): Safari
+  bottom bar (iPad top right), Safari 26 under ••• (iOS 26 freezes the OS at 18_6 in the UA, so
+  Safari's `Version/` gives the iOS version), Chrome (CriOS) at the right end of the address bar,
+  Edge (EdgiOS) ••• in the bottom bar, Firefox (FxiOS) the ≡ menu, others generic; iOS < 16.4 outside
+  Safari → "open this page in Safari to install" + copy link; Android / desktop Chromium → browser
+  menu; Safari 17+ on macOS → File → Add to Dock; desktop Firefox and older Safari → use Chrome or Edge.
   "Not now" shrinks the button to its icon for 14 days; the panel footer keeps the same steps.
 
 ## Location ("My location")
@@ -131,20 +142,35 @@ system font with Vietnamese diacritics or Pillow's default) + `robots.txt` + `me
   the dot stays, the map stays). Tap on showing → following again; tap on following → off (position
   forgotten). No compass mode.
 - Permission: nothing calls geolocation on load except when the Permissions API already says `granted`:
-  then the dot shows silently (showing, the map does not move). `denied` (on load, a refused prompt, or a
-  revoke) → struck-through button; a tap opens a popover with the steps to allow location for this site
-  (iOS Settings → Safari → Location, or the site settings beside the address; map.html from file:// says to
-  open the https link; in Zalo / Facebook / other in-app browsers: open the page in a real browser) and a
-  Try again; the browser is never prompted again by itself. A prompt refused right after a tap opens that
-  popover at once. A permission reset to "ask" turns the button back to off. The Permissions API is only a
-  hint: missing, throwing or rejecting, a tap still asks.
+  then the dot shows silently (showing, the map does not move). Chrome, Edge, Firefox and other iOS
+  browsers run WebKit inside their own app and their Permissions API can answer "prompt"/"denied"
+  whatever is allowed, so there it is ignored (`location/browser.ts`): only a tap asks, and the silent
+  dot on load comes back only after a fix earlier in this tab session (sessionStorage
+  `tripmap:located:v1`, cleared when location is turned off or refused). `denied` (on load, a refused
+  prompt, or a revoke) → struck-through button; a tap opens the help popover with Try again; the
+  browser is never prompted again by itself. A refusal or a "no position" right after a tap opens the
+  help at once. A permission reset to "ask" turns the button back to off.
+- Errors map to `locate.problem` (`locateMachine.ts`): code 1 within 300 ms of the ask (no prompt
+  could have been answered; on iOS the browser app's own permission is Never) → `blocked`, later →
+  `refused`; code 2 from either request → `off` (iOS: Location Services off); only code 3 →
+  `timeout`, the only failure that shows the "try near a window" toast.
+- Help (`location/locateHelp.ts`, by browser): iOS Chrome / Edge / Firefox blocked → Settings → Apps →
+  <app> → Location (iOS < 18: Settings → <app> → Location), While Using the App + Precise Location,
+  come back and Try again; refused → reload and Allow first, then the same app switch. iOS Safari →
+  Location Services → Safari Websites, Settings → (Apps →) Safari → Location, the page's aA / •••
+  website settings. The trip opened from the Home Screen has its own permission → Location Services →
+  this app (or Safari Websites), else remove and re-add it. `off` → Settings → Privacy & Security →
+  Location Services on, then this browser's row (Safari Websites / this app), Try again; off iOS →
+  turn on the device location. Other browsers → site settings beside the address + device setting;
+  map.html from file:// → open the https link; in-app browsers → open the page in a real browser.
 - The tap asks first and synchronously: the click sets the store, whose change starts watchPosition in the
-  same task (user gesture kept); the iOS compass permission is requested after it, in the same tap, and
-  location never waits for or depends on it. Until the first fix a low-accuracy getCurrentPosition
+  same task (user gesture kept, no await before it, also for CriOS); the iOS compass permission is
+  requested after it, in the same tap, and location never waits for or depends on it. Until the first fix a low-accuracy getCurrentPosition
   (network/Wi-Fi, maximumAge 60 s) runs beside the precise watch (30 s first-fix timeout; iOS indoors can
   take 10 to 20 s), so the dot shows early and sharpens; a coarse fix never replaces a precise one. Both
-  giving up → "failed" (struck-through, tap retries) and a toast with Try again (in-app browsers: "open in
-  Safari or Chrome"); after a fix, errors keep the dot.
+  giving up → "failed" (struck-through, tap retries): a timeout shows a toast with Try again (in-app
+  browsers: "open in Safari or Chrome"), no position opens the Location Services help; after a fix,
+  errors keep the dot.
 - watchPosition runs only while locating / showing / following and the page is visible (stopped on
   `visibilitychange` hidden, resumed on return, cleared on unmount).
 - Dot: blue with a white ring and a pulsing halo (static with reduced motion), an accuracy circle (hidden

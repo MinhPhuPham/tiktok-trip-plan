@@ -3,9 +3,12 @@
   "short_name": "__TRIP_SHORT_NAME__",
   "description": "__TRIP_DESCRIPTION__",
   "lang": "vi",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
+  "categories": ["travel", "navigation"],
   "background_color": "#16181d",
   "theme_color": "#16181d",
   "icons": [

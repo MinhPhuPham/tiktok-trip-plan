@@ -197,3 +197,13 @@ def test_site_url_is_normalised(value: str, stored: str) -> None:
 def test_site_url_needs_a_scheme() -> None:
     with pytest.raises(ValidationError, match="https://"):
         ExportConfig(site_url="trip.example.app")
+
+
+def test_installed_app_launches_inside_its_scope_below_the_ios_status_bar() -> None:
+    manifest = json.loads((WEB / "public" / "manifest.webmanifest").read_text(encoding="utf-8"))
+    assert manifest["id"] == manifest["start_url"] == manifest["scope"] == "./"
+    assert manifest["display"] == "standalone"
+    assert manifest["orientation"] == "any"
+    index = (WEB / "index.html").read_text(encoding="utf-8")
+    assert '<meta name="apple-mobile-web-app-status-bar-style" content="default">' in index
+    assert "viewport-fit=cover" in index

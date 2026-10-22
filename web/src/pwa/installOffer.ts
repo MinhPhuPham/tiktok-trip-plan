@@ -1,4 +1,5 @@
 import { storage } from "../lib/storage";
+import type { IconName } from "../ui/IconSprite";
 
 /** How this browser installs a web app when it does not offer its own prompt. */
 export type InstallHelp =
@@ -17,9 +18,19 @@ export type InstallHelp =
 
 export type InstallKind = "prompt" | InstallHelp | "unavailable";
 
+/** The iOS browser app the page runs in: each puts Share, and its location switch, somewhere else. */
+export type IosBrowser = "safari" | "chrome" | "edge" | "firefox" | "other";
+
 export interface BrowserInfo {
   help: InstallHelp;
   ios: boolean;
+  /** null off iOS and in in-app browsers. */
+  iosBrowser: IosBrowser | null;
+  /**
+   * iOS major version: Safari's Version/ (iOS 26 freezes the OS in the user agent at 18), else the
+   * OS version. Other browsers on iOS 26 therefore read 18, which changes none of their steps.
+   */
+  iosMajor: number | null;
 }
 
 const IN_APP =
@@ -27,6 +38,12 @@ const IN_APP =
 const IOS_DEVICE = /iPhone|iPad|iPod/i;
 const IOS_VERSION = /OS (\d+)[_.](\d+)/;
 const IOS_OTHER_BROWSER = /CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|GSA\/|YaBrowser|DuckDuckGo/;
+const IOS_BROWSERS: readonly (readonly [RegExp, IosBrowser])[] = [
+  [/CriOS\//, "chrome"],
+  [/EdgiOS\//, "edge"],
+  [/FxiOS\//, "firefox"],
+  [IOS_OTHER_BROWSER, "other"],
+];
 const SAFARI_VERSION = /Version\/(\d+)/;
 const NOT_SAFARI = /Chrome|Chromium|CriOS|Edg\/|OPR|Firefox/;
 const CHROMIUM = /Chrome\/|Chromium|Edg\//;
@@ -39,25 +56,69 @@ const iosShareEverywhere = (ua: string): boolean => {
   return major > 16 || (major === 16 && minor >= 4);
 };
 
+const iosBrowserOf = (ua: string): IosBrowser => IOS_BROWSERS.find(([pattern]) => pattern.test(ua))?.[1] ?? "safari";
+
+function iosMajorOf(ua: string, browser: IosBrowser | null): number | null {
+  const version = browser === "safari" ? SAFARI_VERSION.exec(ua) : null;
+  const os = IOS_VERSION.exec(ua);
+  const major = Number(version?.[1] ?? os?.[1] ?? Number.NaN);
+  return Number.isFinite(major) ? major : null;
+}
+
 /**
- * Reads the user agent for the install instructions. `touchMac` is an iPad asking for the desktop site
- * (MacIntel with a touch screen), which is iOS Safari.
+ * Reads the user agent for the install and location instructions. `touchMac` is an iPad asking for
+ * the desktop site (MacIntel with a touch screen), which is iOS Safari.
  */
 export function browserInfo(ua: string, touchMac = false): BrowserInfo {
   const ios = IOS_DEVICE.test(ua) || touchMac;
+  const off = { ios, iosBrowser: null, iosMajor: null };
   if (ios) {
-    if (IN_APP.test(ua) || !/Safari\//.test(ua)) return { help: "in-app", ios };
-    const share = !IOS_OTHER_BROWSER.test(ua) || iosShareEverywhere(ua);
-    return { help: share ? "share" : "safari-only", ios };
+    if (IN_APP.test(ua) || !/Safari\//.test(ua)) return { help: "in-app", ...off, iosMajor: iosMajorOf(ua, null) };
+    const iosBrowser = iosBrowserOf(ua);
+    const share = iosBrowser === "safari" || iosShareEverywhere(ua);
+    return { help: share ? "share" : "safari-only", ios, iosBrowser, iosMajor: iosMajorOf(ua, iosBrowser) };
   }
-  if (IN_APP.test(ua)) return { help: "in-app", ios };
-  if (/Android/i.test(ua)) return { help: "menu", ios };
-  if (/Firefox\//.test(ua)) return { help: "unsupported", ios };
+  if (IN_APP.test(ua)) return { help: "in-app", ...off };
+  if (/Android/i.test(ua)) return { help: "menu", ...off };
+  if (/Firefox\//.test(ua)) return { help: "unsupported", ...off };
   if (/Macintosh/.test(ua) && !NOT_SAFARI.test(ua)) {
     const version = Number(SAFARI_VERSION.exec(ua)?.[1] ?? 0);
-    return { help: version >= 17 ? "dock" : "unsupported", ios };
+    return { help: version >= 17 ? "dock" : "unsupported", ...off };
   }
-  return { help: CHROMIUM.test(ua) ? "menu" : "unsupported", ios };
+  return { help: CHROMIUM.test(ua) ? "menu" : "unsupported", ...off };
+}
+
+/** This page's user agent; an iPad asking for the desktop site counts as iOS. */
+export function currentBrowser(): BrowserInfo {
+  const touchMac = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  return browserInfo(navigator.userAgent, touchMac);
+}
+
+export interface InstallStep {
+  text: string;
+  /** Replaces "{icon}" in the text: the button the browser shows. */
+  icon?: IconName;
+}
+
+/** Safari 26 folds Share into the ••• button of its bottom bar. */
+const SAFARI_SHARE_IN_MENU = 26;
+
+const SHARE_STEP: Readonly<Record<IosBrowser, string>> = {
+  safari: "install_ios_share_safari",
+  chrome: "install_ios_share_chrome",
+  edge: "install_ios_share_edge",
+  firefox: "install_ios_share_firefox",
+  other: "install_ios_share",
+};
+
+/** Share → Add to Home Screen, with Share where this iOS browser keeps it. */
+export function shareSteps({ iosBrowser, iosMajor }: Pick<BrowserInfo, "iosBrowser" | "iosMajor">): InstallStep[] {
+  const safari26 = iosBrowser === "safari" && (iosMajor ?? 0) >= SAFARI_SHARE_IN_MENU;
+  const share = safari26 ? "install_ios_share_safari26" : SHARE_STEP[iosBrowser ?? "other"];
+  return [
+    { text: share, icon: "share" },
+    { text: "install_ios_add", icon: "plus-square" },
+  ];
 }
 
 export interface InstallEnv {

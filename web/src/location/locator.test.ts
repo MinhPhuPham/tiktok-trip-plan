@@ -3,7 +3,7 @@ import { buildTripModel } from "../data/model";
 import { planFromData } from "../data/types";
 import { createTripStore, type TripStoreApi } from "../state/store";
 import { makeTrip } from "../test/fixtures";
-import { startLocator, type GeoEnv } from "./locator";
+import { INSTANT_DENIAL_MS, startLocator, type FixMemory, type GeoEnv } from "./locator";
 
 interface Watch {
   id: number;
@@ -63,10 +63,26 @@ function fakeDocument() {
   return { doc, setVisible };
 }
 
+function fakeSession(had = false) {
+  let stored = had;
+  const save = vi.fn(() => {
+    stored = true;
+  });
+  const session: FixMemory = {
+    had: () => stored,
+    save,
+    forget: () => {
+      stored = false;
+    },
+  };
+  return { session, save, stored: () => stored };
+}
+
 function setup({
   permission = "prompt",
   permissions,
-}: { permission?: PermissionState | null; permissions?: GeoEnv["permissions"] } = {}) {
+  hadFix = false,
+}: { permission?: PermissionState | null; permissions?: GeoEnv["permissions"]; hadFix?: boolean } = {}) {
   const data = makeTrip();
   const store: TripStoreApi = createTripStore({
     city: data.city,
@@ -79,17 +95,24 @@ function setup({
   const geo = fakeGeolocation();
   const perm = permission ? fakePermission(permission) : null;
   const { doc, setVisible } = fakeDocument();
+  const clock = { now: 1000 };
+  const memory = fakeSession(hadFix);
   const env: GeoEnv = {
     geolocation: geo.geolocation,
     unavailable: null,
     permissions: permissions ?? perm?.permissions ?? null,
     document: doc,
+    now: () => clock.now,
+    session: memory.session,
   };
   const onFailed = vi.fn();
   const stop = startLocator(store, env, onFailed);
   const tap = () => store.getState().actions.locate({ type: "tap" });
   const mode = () => store.getState().locate.mode;
-  return { store, geo, perm, setVisible, onFailed, stop, tap, mode };
+  const elapse = (ms: number) => {
+    clock.now += ms;
+  };
+  return { store, geo, perm, setVisible, onFailed, stop, tap, mode, elapse, memory };
 }
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -170,14 +193,26 @@ describe("startLocator", () => {
   });
 
   it("fails with a toast only when the precise watch and the coarse fix both give up", () => {
-    const { geo, tap, mode, onFailed } = setup();
+    const { geo, tap, mode, onFailed, store } = setup();
     tap();
     geo.fail(3);
     expect(mode()).toBe("locating");
-    geo.quickFail(2);
+    geo.quickFail(3);
     expect(mode()).toBe("failed");
-    expect(onFailed).toHaveBeenCalledTimes(1);
+    expect(onFailed).toHaveBeenCalledExactlyOnceWith("timeout");
+    expect(store.getState().locate.problem).toBe("timeout");
     expect(geo.active()).toHaveLength(0);
+  });
+
+  it("no position at all (code 2: Location Services off) fails as 'off', not as a timeout", () => {
+    const { geo, tap, mode, onFailed, store } = setup();
+    tap();
+    geo.quickFail(2);
+    expect(mode()).toBe("locating");
+    geo.fail(3);
+    expect(mode()).toBe("failed");
+    expect(store.getState().locate.problem).toBe("off");
+    expect(onFailed).toHaveBeenCalledExactlyOnceWith("off");
   });
 
   it("a tap on failed asks again", () => {
@@ -244,12 +279,43 @@ describe("startLocator", () => {
   });
 
   it("a refused prompt blocks location and stops watching", () => {
-    const { geo, tap, mode, store } = setup();
+    const { geo, tap, mode, store, elapse } = setup();
     tap();
+    elapse(2400);
     geo.fail(1);
     expect(mode()).toBe("denied");
+    expect(store.getState().locate.problem).toBe("refused");
     expect(geo.active()).toHaveLength(0);
     expect(store.getState().userFix).toBeNull();
+  });
+
+  it("a refusal within 300 ms of the tap came without a prompt: blocked by a setting (iOS: the browser app's)", () => {
+    for (const [ms, problem] of [
+      [0, "blocked"],
+      [INSTANT_DENIAL_MS - 1, "blocked"],
+      [INSTANT_DENIAL_MS, "refused"],
+    ] as const) {
+      const { geo, tap, store, elapse, stop } = setup();
+      tap();
+      elapse(ms);
+      geo.quickFail(1);
+      expect(store.getState().locate).toEqual({ mode: "denied", follow: false, problem });
+      stop();
+    }
+  });
+
+  it("times the refusal from the latest ask, not from page load", () => {
+    const { geo, tap, store, elapse } = setup();
+    elapse(60_000);
+    tap();
+    elapse(40);
+    geo.fail(1);
+    expect(store.getState().locate.problem).toBe("blocked");
+    elapse(10_000);
+    store.getState().actions.locate({ type: "retry" });
+    elapse(1500);
+    geo.fail(1);
+    expect(store.getState().locate.problem).toBe("refused");
   });
 
   it("a permission reset in the browser settings turns the blocked button back to off", async () => {
@@ -287,6 +353,44 @@ describe("startLocator", () => {
     tap();
     first.onFix({ coords: { latitude: 1, longitude: 2, accuracy: 5 } } as GeolocationPosition);
     expect(store.getState().userFix).toBeNull();
+  });
+
+  it("without a usable Permissions API (iOS Chrome) nothing starts on load, unless a fix already worked this session", async () => {
+    const first = setup({ permission: null });
+    await settle();
+    expect(first.geo.geolocation.watchPosition).not.toHaveBeenCalled();
+    first.tap();
+    first.geo.fix();
+    first.geo.fix();
+    expect(first.memory.save).toHaveBeenCalledTimes(1);
+    expect(first.memory.stored()).toBe(true);
+    first.stop();
+
+    const again = setup({ permission: null, hadFix: true });
+    expect(again.geo.geolocation.watchPosition).toHaveBeenCalledTimes(1);
+    expect(again.mode()).toBe("locating");
+    again.geo.fix();
+    expect(again.mode()).toBe("showing");
+  });
+
+  it("turning location off or a refusal forgets the session's fix", () => {
+    const off = setup({ permission: null, hadFix: true });
+    off.geo.fix();
+    off.tap();
+    off.tap();
+    expect(off.mode()).toBe("off");
+    expect(off.memory.stored()).toBe(false);
+
+    const refused = setup({ permission: null, hadFix: true });
+    refused.geo.fail(1);
+    expect(refused.mode()).toBe("denied");
+    expect(refused.memory.stored()).toBe(false);
+  });
+
+  it("a trusted Permissions API decides on load; the session memory is not consulted", async () => {
+    const { geo } = setup({ permission: "prompt", hadFix: true });
+    await settle();
+    expect(geo.geolocation.watchPosition).not.toHaveBeenCalled();
   });
 
   it("cleans up on stop", () => {

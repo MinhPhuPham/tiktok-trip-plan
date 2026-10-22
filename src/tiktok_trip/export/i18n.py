@@ -421,7 +421,14 @@ EN = Labels(
         "install_not_now": "Not now",
         "install_got_it": "Got it",
         "install_ios_share": "Tap {icon} Share in the browser toolbar (or under •••).",
-        "install_ios_add": "Choose {icon} Add to Home Screen.",
+        "install_ios_add": "Scroll down, choose {icon} Add to Home Screen, then tap Add.",
+        "install_ios_share_safari": "Tap {icon} Share in Safari's bottom bar (iPad: top right).",
+        "install_ios_share_safari26": "Tap ••• in Safari's bottom bar, then {icon} Share.",
+        "install_ios_share_chrome": "Tap {icon} Share at the right end of the address bar (or ••• "
+        "→ Share).",
+        "install_ios_share_edge": "Tap ••• in the bottom bar, then {icon} Share.",
+        "install_ios_share_firefox": "Tap the ≡ menu, then {icon} Share (or Share in the address "
+        "bar).",
         "installed_toast": "Installed. Open the trip from your home screen.",
         "install_menu_open": "Open the browser menu {icon}.",
         "install_menu_add": "Choose Install app or Add to Home screen.",
@@ -431,8 +438,8 @@ EN = Labels(
         "install_in_app_open": "Tap ••• or ⋮ and choose Open in browser.",
         "install_in_app_then": "In {browser}, tap Install app again.",
         "install_copy_hint": "Can't find it? Copy the link and paste it into {browser}.",
-        "install_safari_only": "On this iOS version only Safari can install apps. "
-        "Copy the link and open it in Safari.",
+        "install_safari_only": "Before iOS 16.4 only Safari installs web apps. Open this page in "
+        "Safari to install it: copy the link and paste it into Safari.",
         "install_unsupported": "This browser can't install web apps. "
         "Open this page in Chrome or Edge to install it.",
         "install_copy_link": "Copy link",
@@ -451,15 +458,46 @@ EN = Labels(
         "locate_retry": "Couldn't find your location. Tap to try again",
         "locate_failed": "Couldn't find your location. Try again near a window or outdoors.",
         "locate_blocked_title": "Location is blocked",
-        "locate_blocked_why": "This browser doesn't let the map use your location. Your "
-        "position stays on this device: it is never sent or saved.",
-        "locate_steps_ios": "iPhone: Settings → Privacy & Security → Location Services: on, "
-        "then Settings → Safari → Location → Ask or Allow.",
+        "locate_blocked_why": "This browser doesn't let the map use your location.",
         "locate_steps_site": "Tap the icon left of the address (ⓘ or the "
         "lock) → Permissions or Site settings → Location → Allow.",
         "locate_steps_device": "Location must also be on for the browser in the device settings.",
         "locate_file": "Opened as a file, this map may not "
         "get your location. Open the trip link (https) instead.",
+        "locate_privacy": "Your position stays on this device: it is never sent or saved.",
+        "locate_this_browser": "this browser",
+        "locate_ios_app_why": "Your iPhone doesn't let {app} use location, so this page can't ask "
+        "you.",
+        "locate_refused_why": "Location was refused when the page asked.",
+        "locate_safari_blocked_why": "Safari blocks location for this page, so it can't ask you.",
+        "locate_webapp_why": "The app on your Home Screen has its own location permission, "
+        "separate from the browser.",
+        "locate_ios_app_settings": "Open Settings → Apps → {app} → Location.",
+        "locate_ios_app_settings_old": "Open Settings → {app} → Location.",
+        "locate_ios_while_using": "Choose While Using the App and turn on Precise Location.",
+        "locate_back_retry": "Come back and tap Try again (or reload the page).",
+        "locate_ios_reload_allow": "Reload the page, tap the location button and choose Allow "
+        "when asked.",
+        "locate_safari_websites": "Settings → Privacy & Security → Location Services → Safari "
+        "Websites → While Using the App, with Precise Location on.",
+        "locate_safari_settings": "Settings → Apps → Safari → Location → Ask or Allow.",
+        "locate_safari_settings_old": "Settings → Safari → Location → Ask or Allow.",
+        "locate_safari_site": "On this page: tap aA (or •••) by the address → Website Settings → "
+        "Location → Allow.",
+        "locate_webapp_settings": "Settings → Privacy & Security → Location Services: on, then "
+        "this app (or Safari Websites) → While Using the App.",
+        "locate_webapp_readd": "Still blocked? Remove the app from the Home Screen, add it again, "
+        "then choose Allow when asked.",
+        "locate_off_title": "Can't get your location",
+        "locate_off_why_ios": "Your iPhone returned no position: Location Services may be off.",
+        "locate_off_why": "Your device returned no position: its location setting may be off.",
+        "locate_ios_services": "Open Settings → Privacy & Security → Location Services and turn "
+        "it on.",
+        "locate_ios_services_app": "Just below, choose {app} → While Using the App.",
+        "locate_ios_services_safari": "Just below, choose Safari Websites → While Using the App.",
+        "locate_ios_services_webapp": "Just below, choose this app (or Safari Websites) → While "
+        "Using the App.",
+        "locate_off_device": "Turn on Location (GPS) in the device settings, then tap Try again.",
         "from_you": "{d} from you",
         "max_days": "A trip plan has at most 7 days",
         "closed_warning": "Closed that day. Hours: {hours}",
@@ -828,7 +866,16 @@ VI = Labels(
         "install_got_it": "Đã hiểu",
         "install_ios_share": "Bấm {icon} Chia sẻ trên thanh công cụ của trình duyệt "
         "(hoặc trong •••).",
-        "install_ios_add": "Chọn {icon} Thêm vào MH chính.",
+        "install_ios_add": "Kéo xuống, chọn {icon} Thêm vào MH chính rồi bấm Thêm.",
+        "install_ios_share_safari": "Bấm {icon} Chia sẻ ở thanh dưới cùng của Safari (iPad: góc "
+        "trên bên phải).",
+        "install_ios_share_safari26": "Bấm ••• ở thanh dưới cùng của Safari rồi chọn {icon} Chia "
+        "sẻ.",
+        "install_ios_share_chrome": "Bấm {icon} Chia sẻ ở đầu phải thanh địa chỉ (hoặc ••• → Chia "
+        "sẻ).",
+        "install_ios_share_edge": "Bấm ••• ở thanh dưới cùng rồi chọn {icon} Chia sẻ.",
+        "install_ios_share_firefox": "Bấm menu ≡ rồi chọn {icon} Chia sẻ (hoặc nút Chia sẻ trên "
+        "thanh địa chỉ).",
         "installed_toast": "Đã cài. Mở chuyến đi từ màn hình chính.",
         "install_menu_open": "Mở menu {icon} của trình duyệt.",
         "install_menu_add": "Chọn Cài đặt ứng dụng hoặc Thêm vào màn hình chính.",
@@ -838,8 +885,8 @@ VI = Labels(
         "install_in_app_open": "Bấm ••• hoặc ⋮, chọn Mở bằng trình duyệt.",
         "install_in_app_then": "Trong {browser}, bấm Cài ứng dụng lần nữa.",
         "install_copy_hint": "Không thấy mục này? Chép link rồi dán vào {browser}.",
-        "install_safari_only": "Trên phiên bản iOS này chỉ Safari cài được ứng dụng. "
-        "Chép link rồi mở bằng Safari.",
+        "install_safari_only": "iOS dưới 16.4 chỉ cài được ứng dụng web bằng Safari. Mở trang này "
+        "trong Safari để cài: chép link rồi dán vào Safari.",
         "install_unsupported": "Trình duyệt này chưa cài được ứng dụng web. "
         "Mở trang bằng Chrome hoặc Edge để cài.",
         "install_copy_link": "Chép link",
@@ -858,15 +905,45 @@ VI = Labels(
         "locate_retry": "Không tìm được vị trí. Bấm để thử lại",
         "locate_failed": "Không tìm được vị trí của bạn. Thử lại gần cửa sổ hoặc ngoài trời.",
         "locate_blocked_title": "Vị trí đang bị chặn",
-        "locate_blocked_why": "Trình duyệt không cho bản đồ dùng vị trí của bạn. Vị "
-        "trí chỉ dùng trên máy này, không gửi đi hay lưu lại.",
-        "locate_steps_ios": "iPhone: Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định "
-        "vị: bật, rồi Cài đặt → Safari → Vị trí → Hỏi hoặc Cho phép.",
+        "locate_blocked_why": "Trình duyệt không cho bản đồ dùng vị trí của bạn.",
         "locate_steps_site": "Bấm biểu tượng bên trái địa chỉ trang (ⓘ hoặc ổ khoá) "
         "→ Quyền hoặc Cài đặt trang web → Vị trí → Cho phép.",
         "locate_steps_device": "Vị trí cũng phải được bật cho trình duyệt trong cài đặt của máy.",
         "locate_file": "Mở bản đồ dạng tệp có thể không lấy "
         "được vị trí. Hãy mở link chuyến đi (https).",
+        "locate_privacy": "Vị trí chỉ dùng trên máy này, không gửi đi hay lưu lại.",
+        "locate_this_browser": "trình duyệt này",
+        "locate_ios_app_why": "iPhone chưa cho {app} dùng vị trí, nên trang này không hỏi được "
+        "bạn.",
+        "locate_refused_why": "Quyền vị trí đã bị từ chối khi trang hỏi.",
+        "locate_safari_blocked_why": "Safari đang chặn vị trí cho trang này nên không hỏi được "
+        "bạn.",
+        "locate_webapp_why": "Ứng dụng trên MH chính có quyền vị trí riêng, tách khỏi trình duyệt.",
+        "locate_ios_app_settings": "Mở Cài đặt → Ứng dụng → {app} → Vị trí.",
+        "locate_ios_app_settings_old": "Mở Cài đặt → {app} → Vị trí.",
+        "locate_ios_while_using": "Chọn Khi dùng ứng dụng và bật Vị trí chính xác.",
+        "locate_back_retry": "Quay lại đây, bấm Thử lại (hoặc tải lại trang).",
+        "locate_ios_reload_allow": "Tải lại trang, bấm nút vị trí rồi chọn Cho phép khi được hỏi.",
+        "locate_safari_websites": "Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị → Trang "
+        "web Safari → Khi dùng ứng dụng, bật Vị trí chính xác.",
+        "locate_safari_settings": "Cài đặt → Ứng dụng → Safari → Vị trí → Hỏi hoặc Cho phép.",
+        "locate_safari_settings_old": "Cài đặt → Safari → Vị trí → Hỏi hoặc Cho phép.",
+        "locate_safari_site": "Trên trang này: bấm aA (hoặc •••) cạnh địa chỉ → Cài đặt trang web "
+        "→ Vị trí → Cho phép.",
+        "locate_webapp_settings": "Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị: bật, rồi "
+        "chọn ứng dụng này (hoặc Trang web Safari) → Khi dùng ứng dụng.",
+        "locate_webapp_readd": "Vẫn bị chặn? Xoá ứng dụng khỏi MH chính, thêm lại, rồi chọn Cho "
+        "phép khi được hỏi.",
+        "locate_off_title": "Chưa lấy được vị trí",
+        "locate_off_why_ios": "iPhone không trả về vị trí: Dịch vụ định vị có thể đang tắt.",
+        "locate_off_why": "Thiết bị không trả về vị trí: định vị của máy có thể đang tắt.",
+        "locate_ios_services": "Mở Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị và bật "
+        "lên.",
+        "locate_ios_services_app": "Ngay bên dưới, chọn {app} → Khi dùng ứng dụng.",
+        "locate_ios_services_safari": "Ngay bên dưới, chọn Trang web Safari → Khi dùng ứng dụng.",
+        "locate_ios_services_webapp": "Ngay bên dưới, chọn ứng dụng này (hoặc Trang web Safari) → "
+        "Khi dùng ứng dụng.",
+        "locate_off_device": "Bật Vị trí (GPS) trong cài đặt của máy, rồi bấm Thử lại.",
         "from_you": "{d} từ bạn",
         "max_days": "Lịch trình tối đa 7 ngày",
         "closed_warning": "Đóng cửa ngày này. Giờ mở cửa: {hours}",

@@ -4,11 +4,22 @@ import { renderTrip } from "../test/renderTrip";
 import type { InstallState } from "./install";
 import { InstallButton } from "./InstallButton";
 import { InstallTool } from "./InstallTool";
-import { SNOOZE_KEY } from "./installOffer";
+import { SNOOZE_KEY, type BrowserInfo, type InstallHelp, type IosBrowser } from "./installOffer";
 
 const install = vi.hoisted((): { state: InstallState } => ({ state: { kind: "unavailable" } }));
 
 vi.mock("./install", () => ({ useInstallState: () => install.state }));
+
+const browser = (help: InstallHelp, iosBrowser: IosBrowser | null = null, iosMajor: number | null = null): BrowserInfo => ({
+  help,
+  ios: iosBrowser != null || help === "safari-only",
+  iosBrowser,
+  iosMajor,
+});
+const state = (help: InstallHelp, iosBrowser: IosBrowser | null = null, iosMajor: number | null = null): InstallState => ({
+  kind: help,
+  browser: browser(help, iosBrowser, iosMajor),
+});
 
 const tool = () => screen.queryByRole("button", { name: "Install app" });
 const openDialog = () => {
@@ -43,7 +54,7 @@ describe("InstallTool", () => {
   });
 
   it("explains Share → Add to Home Screen on iOS; Not now keeps an icon button", () => {
-    install.state = { kind: "share", ios: true };
+    install.state = state("share", "safari", 17);
     const { unmount } = renderTrip(<InstallTool />);
     const dialog = openDialog();
     expect(dialog).toHaveTextContent("Share");
@@ -62,21 +73,26 @@ describe("InstallTool", () => {
   });
 
   it.each([
-    [{ kind: "menu", ios: false }, ["browser menu", "Add to Home screen"]],
-    [{ kind: "dock", ios: false }, ["File, then Add to Dock"]],
-    [{ kind: "unsupported", ios: false }, ["can't install web apps", "Chrome or Edge"]],
-    [{ kind: "safari-only", ios: true }, ["only Safari"]],
-    [{ kind: "in-app", ios: true }, ["Open in browser", "In Safari, tap Install app again", "paste it into Safari"]],
-    [{ kind: "in-app", ios: false }, ["In Chrome, tap Install app again"]],
-  ] as const)("shows the steps for %o", (state, texts) => {
-    install.state = state;
+    [state("menu"), ["browser menu", "Add to Home screen"]],
+    [state("dock"), ["File, then Add to Dock"]],
+    [state("unsupported"), ["can't install web apps", "Chrome or Edge"]],
+    [state("safari-only", "chrome", 15), ["Before iOS 16.4 only Safari", "Open this page in Safari"]],
+    [{ kind: "in-app", browser: { ...browser("in-app"), ios: true } }, ["Open in browser", "In Safari, tap Install app again", "paste it into Safari"]],
+    [state("in-app"), ["In Chrome, tap Install app again"]],
+    [state("share", "safari", 18), ["Share in Safari's bottom bar", "Add to Home Screen, then tap Add"]],
+    [state("share", "safari", 26), ["Tap ••• in Safari's bottom bar, then", "Add to Home Screen"]],
+    [state("share", "chrome", 17), ["Share at the right end of the address bar", "Add to Home Screen"]],
+    [state("share", "edge", 18), ["Tap ••• in the bottom bar, then", "Add to Home Screen"]],
+    [state("share", "firefox", 18), ["Tap the ≡ menu, then", "Add to Home Screen"]],
+  ] as const)("shows the steps for %o", (current, texts) => {
+    install.state = current;
     renderTrip(<InstallTool />);
     const dialog = openDialog();
     for (const text of texts) expect(dialog).toHaveTextContent(text);
   });
 
   it("copies the link, or shows it selected where the clipboard is blocked", async () => {
-    install.state = { kind: "in-app", ios: false };
+    install.state = state("in-app");
     const writeText = vi.fn(() => Promise.resolve());
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
     renderTrip(<InstallTool />);
@@ -91,7 +107,7 @@ describe("InstallTool", () => {
   });
 
   it("speaks Vietnamese and closes on Escape", () => {
-    install.state = { kind: "in-app", ios: true };
+    install.state = { kind: "in-app", browser: { ...browser("in-app"), ios: true } };
     renderTrip(<InstallTool />, { lang: "vi" });
     fireEvent.click(screen.getByRole("button", { name: "Cài ứng dụng" }));
     const dialog = screen.getByRole("dialog", { name: "Cài chuyến đi này" });
@@ -100,6 +116,15 @@ describe("InstallTool", () => {
     expect(screen.getByRole("button", { name: "Chép link" })).toBeInTheDocument();
     fireEvent.keyDown(dialog, { key: "Escape" });
     expect(dialog).not.toBeVisible();
+  });
+
+  it("tells iPhone Chrome where its Share button is, in Vietnamese", () => {
+    install.state = state("share", "chrome", 18);
+    renderTrip(<InstallTool />, { lang: "vi" });
+    fireEvent.click(screen.getByRole("button", { name: "Cài ứng dụng" }));
+    const dialog = screen.getByRole("dialog", { name: "Cài chuyến đi này" });
+    expect(dialog).toHaveTextContent("Bấm Chia sẻ ở đầu phải thanh địa chỉ (hoặc ••• → Chia sẻ).");
+    expect(dialog).toHaveTextContent("Kéo xuống, chọn Thêm vào MH chính rồi bấm Thêm.");
   });
 });
 
@@ -117,7 +142,7 @@ describe("InstallButton (panel footer)", () => {
     unmount();
 
     window.localStorage.setItem(SNOOZE_KEY, JSON.stringify({ v: 1, at: Date.now() }));
-    install.state = { kind: "menu", ios: false };
+    install.state = state("menu");
     const { container } = renderTrip(<InstallButton />);
     expect(container.querySelector("summary")).toHaveTextContent("Install app");
     expect(container).toHaveTextContent("Add to Home screen");

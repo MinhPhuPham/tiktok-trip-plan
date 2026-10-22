@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState, type FocusEvent, type Keyboar
 import { createPortal } from "react-dom";
 import { DOM_IDS, focusById } from "../app/ids";
 import { useT } from "../i18n/useT";
-import { locateBrowser, type LocateBrowser } from "../location/browser";
+import { locateBrowser } from "../location/browser";
 import { requestCompass } from "../location/heading";
-import { isDotShown, type LocateMode } from "../location/locateMachine";
+import { iosAppName, locateHelp, type HelpReason } from "../location/locateHelp";
+import { isDotShown, type LocateMode, type LocateState } from "../location/locateMachine";
 import type { GeoUnavailable } from "../location/locator";
 import { useTripActions, useTripStore, useTripStoreApi } from "../state/hooks";
 import type { TripState } from "../state/store";
@@ -42,6 +43,13 @@ const ANNOUNCED: Readonly<Partial<Record<LocateMode, string>>> = {
 
 const selectMode = (s: TripState) => s.locate.mode;
 const selectAsked = (s: TripState) => s.locate.mode === "locating" && s.locate.follow;
+const selectProblem = (s: TripState) => s.locate.problem;
+
+/** The help this state explains: a refusal, or no position at all (Location Services off). */
+function helpFor({ mode, problem }: Pick<LocateState, "mode" | "problem">): HelpReason | null {
+  if (mode === "denied") return problem === "refused" ? "refused" : "blocked";
+  return mode === "failed" && problem === "off" ? "off" : null;
+}
 
 interface LocateControlProps {
   handle: MapHandle;
@@ -75,17 +83,22 @@ function LocateTool({ unavailable }: { unavailable: GeoUnavailable | null }) {
   const store = useTripStoreApi();
   const mode = useTripStore(selectMode);
   const asked = useTripStore(selectAsked);
+  const problem = useTripStore(selectProblem);
   const { locate } = useTripActions();
   const [open, setOpen] = useState(false);
   const closeHelp = useCallback(() => setOpen(false), []);
   const blocked = unavailable != null || mode === "denied";
-  if (open && !blocked) setOpen(false);
+  const reason = unavailable ?? helpFor({ mode, problem });
+  if (open && !reason) setOpen(false);
 
-  /* A prompt refused after a tap opens the help at once: a greyed icon alone does not say why. */
+  /*
+   * A tap that ends refused (with or without a prompt) or with no position opens the help at once:
+   * a struck-through icon alone does not say which setting to change.
+   */
   useEffect(
     () =>
       store.subscribe((state, previous) => {
-        if (state.locate.mode === "denied" && previous.locate.mode === "locating" && previous.locate.follow) setOpen(true);
+        if (helpFor(state.locate) && previous.locate.mode === "locating" && previous.locate.follow) setOpen(true);
       }),
     [store],
   );
@@ -122,36 +135,28 @@ function LocateTool({ unavailable }: { unavailable: GeoUnavailable | null }) {
       <span className="sr-only" role="status">
         {announced ? t.t(announced) : ""}
       </span>
-      {open ? <BlockedHelp reason={unavailable ?? "denied"} onClose={closeHelp} onRetry={() => locate({ type: "retry" })} /> : null}
+      {open && reason ? <LocateHelpPopover reason={reason} onClose={closeHelp} onRetry={() => locate({ type: "retry" })} /> : null}
     </>
   );
 }
 
-interface BlockedHelpProps {
-  reason: "denied" | GeoUnavailable;
+interface LocateHelpProps {
+  reason: HelpReason;
   onClose: () => void;
   onRetry: () => void;
 }
 
-/** The help's text keys: why, then the steps to take (most specific case first). */
-function helpText(reason: BlockedHelpProps["reason"], browser: LocateBrowser, file: boolean): { why: string; steps: string[] } {
-  if (reason === "insecure") return { why: "locate_insecure", steps: [] };
-  if (browser.inApp) return { why: "locate_in_app", steps: ["install_in_app_open"] };
-  if (reason === "unsupported") return { why: "locate_unsupported", steps: [] };
-  if (file) return { why: "locate_blocked_why", steps: ["locate_file"] };
-  return { why: "locate_blocked_why", steps: browser.ios ? ["locate_steps_ios"] : ["locate_steps_site", "locate_steps_device"] };
-}
-
 /**
- * Why location is blocked (or cannot work on this page) and what to do: the browser is never asked
- * twice by itself; Try again asks once more.
+ * Why location is blocked, off or cannot work on this page, and the settings to change for this
+ * browser: the browser is never asked twice by itself; Try again asks once more.
  */
-function BlockedHelp({ reason, onClose, onRetry }: BlockedHelpProps) {
+function LocateHelpPopover({ reason, onClose, onRetry }: LocateHelpProps) {
   const t = useT();
   const pop = useRef<HTMLDivElement>(null);
   const [browser] = useState(locateBrowser);
-  const { why, steps } = helpText(reason, browser, window.location.protocol === "file:");
-  const denied = reason === "denied";
+  const help = locateHelp(reason, browser, window.location.protocol === "file:");
+  const vars = { app: iosAppName(browser) ?? t.t("locate_this_browser") };
+  const { steps } = help;
 
   useEffect(() => {
     pop.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
@@ -194,18 +199,19 @@ function BlockedHelp({ reason, onClose, onRetry }: BlockedHelpProps) {
       onKeyDown={onKeyDown}
       onBlur={onBlur}
     >
-      <h2 id={TITLE_ID}>{t.t(denied ? "locate_blocked_title" : "locate_unavailable_title")}</h2>
-      <p>{t.t(why)}</p>
-      {steps.length === 1 ? <p>{t.t(steps[0]!)}</p> : null}
+      <h2 id={TITLE_ID}>{t.t(help.title)}</h2>
+      <p>{t.t(help.why, vars)}</p>
+      {steps.length === 1 ? <p>{t.t(steps[0]!, vars)}</p> : null}
       {steps.length > 1 ? (
         <ol className="install-steps">
           {steps.map((key) => (
-            <li key={key}>{t.t(key)}</li>
+            <li key={key}>{t.t(key, vars)}</li>
           ))}
         </ol>
       ) : null}
+      {help.privacy ? <p className="locate-privacy">{t.t("locate_privacy")}</p> : null}
       <div className="install-actions">
-        {denied ? (
+        {help.retry ? (
           <Button
             variant="ghost"
             onClick={() => {

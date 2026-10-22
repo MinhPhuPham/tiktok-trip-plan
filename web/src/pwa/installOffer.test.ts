@@ -6,9 +6,11 @@ import {
   installKind,
   loadInstallSnooze,
   saveInstallSnooze,
+  shareSteps,
   SNOOZE_KEY,
   type InstallEnv,
   type InstallHelp,
+  type IosBrowser,
 } from "./installOffer";
 
 const IPHONE = (os: string) => `Mozilla/5.0 (iPhone; CPU iPhone OS ${os} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)`;
@@ -16,13 +18,23 @@ const ANDROID = "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (K
 const MAC = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)";
 const WINDOWS = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
 
-const USER_AGENTS: readonly (readonly [string, string, InstallHelp, boolean])[] = [
-  ["iOS Safari", `${IPHONE("17_5")} Version/17.5 Mobile/15E148 Safari/604.1`, "share", true],
-  ["iOS Chrome 17", `${IPHONE("17_5")} CriOS/126.0.6478.54 Mobile/15E148 Safari/604.1`, "share", true],
-  ["iOS Edge 16.4", `${IPHONE("16_4")} EdgiOS/125.0 Version/16.0 Mobile/15E148 Safari/604.1`, "share", true],
-  ["iOS Firefox 16.3", `${IPHONE("16_3")} FxiOS/120.0 Mobile/15E148 Safari/605.1.15`, "safari-only", true],
-  ["iOS Safari 15", `${IPHONE("15_8")} Version/15.6 Mobile/15E148 Safari/604.1`, "share", true],
-  ["iPad desktop Safari", `${MAC} Version/17.5 Safari/605.1.15`, "share", true],
+type Row = readonly [name: string, ua: string, help: InstallHelp, ios: boolean, iosBrowser?: IosBrowser, iosMajor?: number];
+
+const USER_AGENTS: readonly Row[] = [
+  ["iOS Safari", `${IPHONE("17_5")} Version/17.5 Mobile/15E148 Safari/604.1`, "share", true, "safari", 17],
+  ["iOS Safari 18", `${IPHONE("18_5")} Version/18.5 Mobile/15E148 Safari/604.1`, "share", true, "safari", 18],
+  ["iOS Safari 26 (OS frozen at 18_6)", `${IPHONE("18_6")} Version/26.0 Mobile/15E148 Safari/604.1`, "share", true, "safari", 26],
+  ["iOS Chrome 17", `${IPHONE("17_5")} CriOS/126.0.6478.54 Mobile/15E148 Safari/604.1`, "share", true, "chrome", 17],
+  ["iOS Chrome 16.4", `${IPHONE("16_4")} CriOS/112.0.5615.46 Mobile/15E148 Safari/604.1`, "share", true, "chrome", 16],
+  ["iOS Chrome 15", `${IPHONE("15_7")} CriOS/112.0.5615.46 Mobile/15E148 Safari/604.1`, "safari-only", true, "chrome", 15],
+  ["iOS Chrome on iOS 26", `${IPHONE("18_6")} CriOS/141.0.7390.41 Mobile/15E148 Safari/604.1`, "share", true, "chrome", 18],
+  ["iOS Edge 16.4", `${IPHONE("16_4")} EdgiOS/125.0 Version/16.0 Mobile/15E148 Safari/604.1`, "share", true, "edge", 16],
+  ["iOS Edge 18", `${IPHONE("18_5")} EdgiOS/138.0.3351.65 Version/18.0 Mobile/15E148 Safari/604.1`, "share", true, "edge", 18],
+  ["iOS Firefox 16.3", `${IPHONE("16_3")} FxiOS/120.0 Mobile/15E148 Safari/605.1.15`, "safari-only", true, "firefox", 16],
+  ["iOS Firefox 18", `${IPHONE("18_5")} FxiOS/140.0 Mobile/15E148 Safari/605.1.15`, "share", true, "firefox", 18],
+  ["iOS Opera 17", `${IPHONE("17_5")} OPT/5.0.0 Mobile/15E148 Safari/604.1`, "share", true, "other", 17],
+  ["iOS Safari 15", `${IPHONE("15_8")} Version/15.6 Mobile/15E148 Safari/604.1`, "share", true, "safari", 15],
+  ["iPad desktop Safari", `${MAC} Version/17.5 Safari/605.1.15`, "share", true, "safari", 17],
   ["Zalo iOS", `${IPHONE("17_5")} Mobile/15E148 Zalo iOS/600 ZaloTheme/light ZaloLanguage/vi`, "in-app", true],
   ["Facebook iOS", `${IPHONE("17_5")} Mobile/15E148 [FBAN/FBIOS;FBAV/470.0.0.37.97;FBBV/618234112]`, "in-app", true],
   ["Messenger iOS", `${IPHONE("17_5")} Mobile/15E148 LightSpeed [FBAN/MessengerLiteForiOS;FBAV/470.0]`, "in-app", true],
@@ -55,8 +67,39 @@ const env = (patch: Partial<InstallEnv> = {}): InstallEnv => ({
 });
 
 describe("install help by browser", () => {
-  it.each(USER_AGENTS)("%s", (name, ua, help, ios) => {
-    expect(browserInfo(ua, name.startsWith("iPad"))).toEqual({ help, ios });
+  it.each(USER_AGENTS.map((row) => ({ name: row[0], row })))("$name", ({ row: [name, ua, help, ios, iosBrowser, iosMajor] }) => {
+    const info = browserInfo(ua, name.startsWith("iPad"));
+    expect(info).toMatchObject({ help, ios, iosBrowser: iosBrowser ?? null });
+    if (iosMajor != null) expect(info.iosMajor).toBe(iosMajor);
+    if (!ios) expect(info.iosMajor).toBeNull();
+  });
+});
+
+describe("Share → Add to Home Screen steps on iOS", () => {
+  const firstStep = (ua: string) => shareSteps(browserInfo(ua))[0]!.text;
+  const row = (name: string) => USER_AGENTS.find(([n]) => n === name)![1];
+
+  it.each([
+    ["iOS Safari", "install_ios_share_safari"],
+    ["iOS Safari 18", "install_ios_share_safari"],
+    ["iOS Safari 26 (OS frozen at 18_6)", "install_ios_share_safari26"],
+    ["iOS Chrome 17", "install_ios_share_chrome"],
+    ["iOS Chrome on iOS 26", "install_ios_share_chrome"],
+    ["iOS Edge 18", "install_ios_share_edge"],
+    ["iOS Firefox 18", "install_ios_share_firefox"],
+    ["iOS Opera 17", "install_ios_share"],
+  ])("%s finds Share with %s", (name, key) => {
+    expect(firstStep(row(name))).toBe(key);
+  });
+
+  it("always ends with Add to Home Screen, each step with the icon the browser shows", () => {
+    for (const [, ua, help] of USER_AGENTS) {
+      if (help !== "share") continue;
+      const [share, add] = shareSteps(browserInfo(ua));
+      expect(share?.text).toMatch(/^install_ios_share/);
+      expect(share?.icon).toBe("share");
+      expect(add).toEqual({ text: "install_ios_add", icon: "plus-square" });
+    }
   });
 });
 

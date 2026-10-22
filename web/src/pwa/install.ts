@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { browserInfo, installKind, type InstallHelp } from "./installOffer";
+import { currentBrowser, installKind, type BrowserInfo, type InstallHelp } from "./installOffer";
 
 type InstallOutcome = "accepted" | "dismissed";
 
@@ -11,7 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 export type InstallState =
   | { kind: "unavailable" }
   | { kind: "prompt"; install: () => Promise<InstallOutcome> }
-  | { kind: InstallHelp; ios: boolean };
+  | { kind: InstallHelp; browser: BrowserInfo };
 
 const listeners = new Set<() => void>();
 const installedListeners = new Set<() => void>();
@@ -25,12 +25,12 @@ export const isStandalone = (): boolean =>
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 function compute(): InstallState {
-  const touchMac = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-  const { help, ios } = browserInfo(navigator.userAgent, touchMac);
+  const browser = currentBrowser();
+  const { help } = browser;
   const kind = installKind({ pwa: __PWA__, installed, standalone: isStandalone(), canPrompt: deferred != null, help });
   const event = deferred;
   if (kind === "unavailable") return { kind };
-  if (kind !== "prompt" || !event) return { kind: help, ios };
+  if (kind !== "prompt" || !event) return { kind: help, browser };
   return {
     kind,
     install: async () => {
